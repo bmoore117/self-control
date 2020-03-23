@@ -8,6 +8,8 @@ import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 public class NetNannySetCategoryJob {
 
+    private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
+
     public static boolean setCategory(CredentialService credentialService, String category, boolean allowed) {
         DesiredCapabilities capabilities = DesiredCapabilities.chrome();
         WebDriver driver = null;
@@ -26,34 +30,34 @@ public class NetNannySetCategoryJob {
                     new URL("http://0.0.0.0:4444/wd/hub"),
                     capabilities);
 
-            System.out.println("Driver constructed");
+            log.info("Driver constructed");
             NetNannyLoginPage loginPage = new NetNannyLoginPage(driver, credentialService);
 
             if (!loginPage.navigateToLoginPage()) {
-                System.out.println("Login page not present");
+                log.error("Login page not present");
                 return false;
             }
 
-            System.out.println("Doing login");
+            log.info("Doing login");
             Optional<NetNannyDashboard> dashboardOpt = loginPage.doLogin();
             if (!dashboardOpt.isPresent()) {
-                System.out.println("Dashboard not present");
+                log.error("Dashboard not present");
                 return false;
             }
 
             NetNannyDashboard dashboard = dashboardOpt.get();
-            System.out.println("Clicking profile");
+            log.info("Clicking profile");
             Optional<NetNannyProfile> profileOpt = dashboard.clickProfile();
             if (!profileOpt.isPresent()) {
-                System.out.println("Profile not present");
+                log.error("Profile not present");
                 return false;
             }
 
             NetNannyProfile profile = profileOpt.get();
-            System.out.println("Opening restrictions menu");
+            log.info("Opening restrictions menu");
             Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu();
             if (!filtersOpt.isPresent()) {
-                System.out.println("Restrictions menu not present");
+                log.error("Restrictions menu not present");
                 return false;
             }
 
@@ -79,14 +83,14 @@ public class NetNannySetCategoryJob {
                 try {
                     m.invoke(filtersPage);
                 } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
+                    log.error("Error invoking method, " + m.getName(), e);
                     return false;
                 }
             }
 
             return true;
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.error("Malformed selenium host url", e);
             return false;
         } finally {
             if (driver != null) {

@@ -5,12 +5,16 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class NetNannyFiltersPage {
+
+    private static final Logger log = LoggerFactory.getLogger(NetNannyFiltersPage.class);
 
     private WebDriver driver;
     private WebElement modal;
@@ -42,7 +46,7 @@ public class NetNannyFiltersPage {
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException ex) {
-                            ex.printStackTrace();
+                            log.error("Thread interrupted while sleeping after scroll", ex);
                         }
                     }
                     return e.getText().toLowerCase().contains(category);
@@ -62,12 +66,12 @@ public class NetNannyFiltersPage {
          return modal.findElements(By.tagName("li")).stream()
                 .map(e -> {
                     if (!e.isDisplayed()) {
-                        System.out.println("Scrolling element into view");
+                        log.info("Scrolling element into view");
                         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", e);
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException ex) {
-                            ex.printStackTrace();
+                            log.error("Thread interrupted while sleeping after scroll", ex);
                         }
                     }
                     String[] textParts = e.getText().split("\\W+");
@@ -81,7 +85,7 @@ public class NetNannyFiltersPage {
                     WebElement activeButton = e.findElement(By.cssSelector("button.active"));
                     String status = activeButton.getText();
                     FilterCategory f = new FilterCategory(category, status);
-                    System.out.println(f.toString());
+                    log.info(f.toString());
                     return f;
                 }).collect(Collectors.toList());
     }

@@ -9,6 +9,8 @@ import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 public class NetNannyStatusJob {
 
+    private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
+
     public static List<FilterCategory> getNetNannyStatuses(CredentialService credentialService) {
         DesiredCapabilities capabilities = DesiredCapabilities.chrome();
         WebDriver driver = null;
@@ -26,34 +30,34 @@ public class NetNannyStatusJob {
                     new URL("http://0.0.0.0:4444/wd/hub"),
                     capabilities);
 
-            System.out.println("Driver constructed");
+            log.info("Driver constructed");
             NetNannyLoginPage loginPage = new NetNannyLoginPage(driver, credentialService);
 
             if (!loginPage.navigateToLoginPage()) {
-                System.out.println("Login page not present");
+                log.error("Login page not present");
                 return Collections.emptyList();
             }
 
-            System.out.println("Doing login");
+            log.info("Doing login");
             Optional<NetNannyDashboard> dashboardOpt = loginPage.doLogin();
             if (!dashboardOpt.isPresent()) {
-                System.out.println("Dashboard not present");
+                log.error("Dashboard not present");
                 return Collections.emptyList();
             }
 
             NetNannyDashboard dashboard = dashboardOpt.get();
-            System.out.println("Clicking profile");
+            log.info("Clicking profile");
             Optional<NetNannyProfile> profileOpt = dashboard.clickProfile();
             if (!profileOpt.isPresent()) {
-                System.out.println("Profile not present");
+                log.error("Profile not present");
                 return Collections.emptyList();
             }
 
             NetNannyProfile profile = profileOpt.get();
             Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu();
-            System.out.println("Opening restrictions menu");
+            log.info("Opening restrictions menu");
             if (!filtersOpt.isPresent()) {
-                System.out.println("Restrictions menu not present");
+                log.error("Restrictions menu not present");
                 return Collections.emptyList();
             }
 
@@ -62,7 +66,7 @@ public class NetNannyStatusJob {
 
             return filterCategories;
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.error("Malformed selenium host url", e);
             return Collections.emptyList();
         } finally {
             if (driver != null) {

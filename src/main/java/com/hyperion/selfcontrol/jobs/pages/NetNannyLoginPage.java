@@ -7,10 +7,14 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 public class NetNannyLoginPage {
+
+    private static final Logger log = LoggerFactory.getLogger(NetNannyLoginPage.class);
 
     private WebDriver driver;
     private CredentialService credentialService;
@@ -45,7 +49,7 @@ public class NetNannyLoginPage {
                 Thread.sleep(1000);
                 contains = driver.getPageSource().toLowerCase().contains("your screentime parenting ally");
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error("Thread interrupted while waiting for main dashboard", e);
             }
         }
 
