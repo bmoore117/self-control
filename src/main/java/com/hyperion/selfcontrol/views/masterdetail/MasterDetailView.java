@@ -2,12 +2,19 @@ package com.hyperion.selfcontrol.views.masterdetail;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.FilterCategory;
+import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
+import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.hyperion.selfcontrol.backend.BackendService;
@@ -30,7 +37,10 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import com.hyperion.selfcontrol.views.main.MainView;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Route(value = "master-detail", layout = MainView.class)
@@ -39,6 +49,8 @@ import java.util.concurrent.CompletableFuture;
 @CssImport(value = "styles/views/masterdetail/master-detail-view.css", include = "lumo-badge")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
 public class MasterDetailView extends Div implements AfterNavigationObserver {
+
+    private static final Logger log = LoggerFactory.getLogger(MasterDetailView.class);
 
     @Autowired
     private BackendService service;
@@ -81,24 +93,50 @@ public class MasterDetailView extends Div implements AfterNavigationObserver {
         // the grid valueChangeEvent will clear the form too
         setAllowed.addClickListener(e -> {
             FilterCategory category = statuses.asSingleSelect().getValue();
-
-            boolean invoked = NetNannySetCategoryJob.setCategory(credentialService, category.getName(), true);
-            if (invoked) {
-                doAfterNavigation();
-            }
-
             statuses.asSingleSelect().clear();
+
+            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+            WebDriver driver = null;
+            try {
+                driver = new RemoteWebDriver(
+                        new URL("http://0.0.0.0:4444/wd/hub"),
+                        capabilities);
+
+                Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), true))
+                        .map(NetNannyStatusJob::getNetNannyStatuses);
+                filterCategories.ifPresent(items -> statuses.setItems(items));
+            } catch (MalformedURLException ex) {
+                log.error("Malformed selenium host url", ex);
+            } finally {
+                if (driver != null) {
+                    driver.close();
+                }
+            }
         });
 
         setBlocked.addClickListener(e -> {
             FilterCategory category = statuses.asSingleSelect().getValue();
-
-            boolean invoked = NetNannySetCategoryJob.setCategory(credentialService, category.getName(), false);
-            if (invoked) {
-                doAfterNavigation();
-            }
-
             statuses.asSingleSelect().clear();
+
+            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+            WebDriver driver = null;
+            try {
+                driver = new RemoteWebDriver(
+                        new URL("http://0.0.0.0:4444/wd/hub"),
+                        capabilities);
+
+                Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), false))
+                        .map(NetNannyStatusJob::getNetNannyStatuses);
+                filterCategories.ifPresent(items -> statuses.setItems(items));
+            } catch (MalformedURLException ex) {
+                log.error("Malformed selenium host url", ex);
+            } finally {
+                if (driver != null) {
+                    driver.close();
+                }
+            }
         });
 
         SplitLayout splitLayout = new SplitLayout();
@@ -151,18 +189,27 @@ public class MasterDetailView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        doAfterNavigation();
+        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(
+                    new URL("http://0.0.0.0:4444/wd/hub"),
+                    capabilities);
+
+            doAfterNavigation(driver);
+        } catch (MalformedURLException e) {
+            log.error("Malformed selenium host url", e);
+        } finally {
+            if (driver != null) {
+                driver.close();
+            }
+        }
     }
 
-    public void doAfterNavigation() {
-        UI ui = UI.getCurrent();
-        CompletableFuture.runAsync(() -> {
-            List<FilterCategory> netNannyStatuses = NetNannyStatusJob.getNetNannyStatuses(credentialService);
-            ui.access(() -> {
-                statuses.setItems(netNannyStatuses);
-                ui.push();
-            });
-        });
+    public void doAfterNavigation(WebDriver driver) {
+        Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                .map(NetNannyStatusJob::getNetNannyStatuses);
+        filterCategories.ifPresent(categories -> statuses.setItems(categories));
     }
 
     private void populateForm(FilterCategory value) {

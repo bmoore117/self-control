@@ -19,6 +19,13 @@ public class NetNannyProfile {
         this.menu = menu;
     }
 
+    public NetNannyProfile(WebDriver driver) {
+        this.driver = driver;
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        this.menu = wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("div.button-standard-restrictions.standard-restrictions-menu")));
+    }
+
     public Optional<NetNannyFiltersPage> clickMenu() {
         menu.click();
 

@@ -24,6 +24,13 @@ public class NetNannyFiltersPage {
         this.modal = modal;
     }
 
+    public NetNannyProfile close() {
+        WebElement webElement = driver.findElement(By.cssSelector("svg.btn-close"));
+        log.info("Clicking close button for content filters page");
+        webElement.click();
+        return new NetNannyProfile(driver);
+    }
+
     private void findAndDo(String category, String action) {
         Optional<WebElement> li = modal.findElements(By.tagName("li")).stream()
                 .filter(e -> e.getText().toLowerCase().contains(category))
