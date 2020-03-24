@@ -5,7 +5,10 @@ import com.hyperion.selfcontrol.jobs.pages.NetNannyDashboard;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyLoginPage;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
@@ -29,6 +32,11 @@ public class NetNannySetCategoryJob {
             driver = new RemoteWebDriver(
                     new URL("http://0.0.0.0:4444/wd/hub"),
                     capabilities);
+
+            driver.manage().deleteAllCookies();
+            driver.get("chrome://settings/clearBrowserData");
+            WebElement settings = driver.findElement(By.xpath("//settings-ui"));
+            settings.sendKeys(Keys.ENTER);
 
             log.info("Driver constructed");
             NetNannyLoginPage loginPage = new NetNannyLoginPage(driver, credentialService);
