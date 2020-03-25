@@ -1,12 +1,10 @@
-package com.hyperion.selfcontrol.views.masterdetail;
+package com.hyperion.selfcontrol.views.filters;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -41,16 +39,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-@Route(value = "master-detail", layout = MainView.class)
+@Route(value = "filters", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
 @PageTitle("Master-Detail")
-@CssImport(value = "styles/views/masterdetail/master-detail-view.css", include = "lumo-badge")
+@CssImport(value = "styles/views/filters/filters-view.css", include = "lumo-badge")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
-public class MasterDetailView extends Div implements AfterNavigationObserver {
+public class FiltersView extends Div implements AfterNavigationObserver {
 
-    private static final Logger log = LoggerFactory.getLogger(MasterDetailView.class);
+    private static final Logger log = LoggerFactory.getLogger(FiltersView.class);
 
     @Autowired
     private BackendService service;
@@ -68,7 +65,7 @@ public class MasterDetailView extends Div implements AfterNavigationObserver {
 
     private Binder<FilterCategory> binder;
 
-    public MasterDetailView() {
+    public FiltersView() {
         setId("master-detail-view");
         // Configure Grid
         statuses = new Grid<>();

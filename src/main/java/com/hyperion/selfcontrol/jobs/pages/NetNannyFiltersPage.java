@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.jobs.pages;
 
+import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -92,6 +93,34 @@ public class NetNannyFiltersPage {
                     WebElement activeButton = e.findElement(By.cssSelector("button.active"));
                     String status = activeButton.getText();
                     FilterCategory f = new FilterCategory(category, status);
+                    log.info(f.toString());
+                    return f;
+                }).collect(Collectors.toList());
+    }
+
+    public List<CustomFilterCategory> getCustomStatuses() {
+        return modal.findElements(By.cssSelector("div.filters-list")).stream()
+                .map(e -> {
+                    if (!e.isDisplayed()) {
+                        log.info("Scrolling element into view");
+                        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", e);
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException ex) {
+                            log.error("Thread interrupted while sleeping after scroll", ex);
+                        }
+                    }
+                    String[] textParts = e.getText().split("\\W+");
+                    String category;
+                    if (textParts.length == 4) {
+                        category = textParts[0];
+                    } else {
+                        category = textParts[0] + " " + textParts[1];
+                    }
+
+                    WebElement activeButton = e.findElement(By.cssSelector("button.active"));
+                    String status = activeButton.getText();
+                    CustomFilterCategory f = new CustomFilterCategory(category, status);
                     log.info(f.toString());
                     return f;
                 }).collect(Collectors.toList());

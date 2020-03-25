@@ -51,4 +51,30 @@ public class NetNannyProfile {
             return Optional.empty();
         }
     }
+
+    public Optional<NetNannyFiltersPage> clickCustomFiltersMenu() {
+        menu.click();
+
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        List<WebElement> restrictions = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.cssSelector("div.restrictions-item")));
+
+        Optional<WebElement> filters = restrictions.stream()
+                .filter(e -> "custom content filters".equals(e.getText().toLowerCase())).findFirst();
+
+        if (filters.isPresent()) {
+            filters.get().click();
+        } else {
+            return Optional.empty();
+        }
+
+        WebElement modal = wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("div.modal")));
+
+        if (modal != null && modal.isDisplayed()) {
+            return Optional.of(new NetNannyFiltersPage(driver, modal));
+        } else {
+            return Optional.empty();
+        }
+    }
 }

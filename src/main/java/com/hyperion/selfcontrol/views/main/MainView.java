@@ -4,15 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.hyperion.selfcontrol.views.customfilters.CustomFiltersView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.dependency.JsModule;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabVariant;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.RouteConfiguration;
@@ -20,11 +19,7 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;import com.vaadin.flow.theme.lumo.Lumo;
 
-import com.hyperion.selfcontrol.views.main.MainView;
-import com.hyperion.selfcontrol.views.masterdetail.MasterDetailView;
-import com.hyperion.selfcontrol.views.cardlist.CardListView;
-import com.hyperion.selfcontrol.views.form.FormView;
-import com.hyperion.selfcontrol.views.empty.EmptyView;
+import com.hyperion.selfcontrol.views.filters.FiltersView;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -55,7 +50,8 @@ public class MainView extends AppLayout {
 
     private static Tab[] getAvailableTabs() {
         final List<Tab> tabs = new ArrayList<>();
-        tabs.add(createTab("Master-Detail", MasterDetailView.class));
+        tabs.add(createTab("Filters", FiltersView.class));
+        tabs.add(createTab("Custom Filters", CustomFiltersView.class));
         return tabs.toArray(new Tab[tabs.size()]);
     }
 
