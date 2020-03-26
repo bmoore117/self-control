@@ -4,10 +4,7 @@ import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyDashboard;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyLoginPage;
 import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,5 +44,15 @@ public class NetNannyBaseJob {
         }
 
         return profileOpt;
+    }
+
+    public static void scrollIntoView(WebElement element, WebDriver driver) {
+        log.info("Scrolling element into view");
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+            log.error("Thread interrupted while sleeping after scroll", ex);
+        }
     }
 }

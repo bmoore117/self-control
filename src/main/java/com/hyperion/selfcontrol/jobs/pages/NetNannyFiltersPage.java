@@ -2,13 +2,16 @@ package com.hyperion.selfcontrol.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
+import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,7 +35,7 @@ public class NetNannyFiltersPage {
         return new NetNannyProfile(driver);
     }
 
-    private void findAndDo(String category, String action) {
+    public void findAndDo(String category, String action) {
         Optional<WebElement> li = modal.findElements(By.tagName("li")).stream()
                 .filter(e -> e.getText().toLowerCase().contains(category))
                 .findFirst();
@@ -50,12 +53,7 @@ public class NetNannyFiltersPage {
         Optional<WebElement> li = modal.findElements(By.tagName("li")).stream()
                 .filter(e -> {
                     if (!e.isDisplayed()) {
-                        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", e);
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException ex) {
-                            log.error("Thread interrupted while sleeping after scroll", ex);
-                        }
+                        NetNannyBaseJob.scrollIntoView(e, driver);
                     }
                     return e.getText().toLowerCase().contains(category);
                 }).findFirst();
@@ -71,226 +69,66 @@ public class NetNannyFiltersPage {
     }
 
     public List<FilterCategory> getStatuses() {
-         return modal.findElements(By.tagName("li")).stream()
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        Boolean li = wait.until(driver -> !modal.findElements(By.tagName("li")).isEmpty());
+        List<WebElement> lis = new ArrayList<>();
+        if (li != null && li) {
+            lis.addAll(modal.findElements(By.tagName("li")));
+        }
+
+        List<FilterCategory> collect = lis.stream()
                 .map(e -> {
                     if (!e.isDisplayed()) {
-                        log.info("Scrolling element into view");
-                        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", e);
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException ex) {
-                            log.error("Thread interrupted while sleeping after scroll", ex);
-                        }
+                        NetNannyBaseJob.scrollIntoView(e, driver);
                     }
                     String[] textParts = e.getText().split("\\W+");
-                    String category;
-                    if (textParts.length == 4) {
-                        category = textParts[0];
-                    } else {
-                        category = textParts[0] + " " + textParts[1];
+                    StringBuilder category = new StringBuilder();
+                    int length = textParts.length - 3;
+                    for (int i = 0; i < length; i++) {
+                        category.append(textParts[i]).append(" ");
                     }
 
                     WebElement activeButton = e.findElement(By.cssSelector("button.active"));
                     String status = activeButton.getText();
-                    FilterCategory f = new FilterCategory(category, status);
+                    FilterCategory f = new FilterCategory(category.toString().trim(), status);
                     log.info(f.toString());
                     return f;
                 }).collect(Collectors.toList());
+
+        if (collect.isEmpty()) {
+            log.error("No lis found in modal, returning empty list");
+        }
+
+        return collect;
     }
 
     public List<CustomFilterCategory> getCustomStatuses() {
-        return modal.findElements(By.cssSelector("div.filters-list")).stream()
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        List<WebElement> elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.filters-list")));
+
+        List<CustomFilterCategory> collect = elements.stream()
                 .map(e -> {
                     if (!e.isDisplayed()) {
-                        log.info("Scrolling element into view");
-                        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", e);
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException ex) {
-                            log.error("Thread interrupted while sleeping after scroll", ex);
-                        }
+                        NetNannyBaseJob.scrollIntoView(e, driver);
                     }
                     String[] textParts = e.getText().split("\\W+");
-                    String category;
-                    if (textParts.length == 4) {
-                        category = textParts[0];
-                    } else {
-                        category = textParts[0] + " " + textParts[1];
+                    StringBuilder category = new StringBuilder();
+                    int length = textParts.length - 3;
+                    for (int i = 0; i < length; i++) {
+                        category.append(textParts[i]).append(" ");
                     }
 
                     WebElement activeButton = e.findElement(By.cssSelector("button.active"));
                     String status = activeButton.getText();
-                    CustomFilterCategory f = new CustomFilterCategory(category, status);
+                    CustomFilterCategory f = new CustomFilterCategory(category.toString().trim(), status);
                     log.info(f.toString());
                     return f;
                 }).collect(Collectors.toList());
-    }
 
-    public String getPornStatus() {
-        return find("porn").orElse("error");
-    }
+        if (collect.isEmpty()) {
+            log.error("No custom filters found in modal, returning empty list");
+        }
 
-    public String getMatureContentStatus() {
-        return find("mature content").orElse("error");
-    }
-
-    public String getAdultNoveltyStatus() {
-        return find("adult novelty").orElse("error");
-    }
-
-    public String getAnimeStatus() {
-        return find("anime").orElse("error");
-    }
-
-    public String getNudityStatus() {
-        return find("nudity").orElse("error");
-    }
-
-    public String getAbortionStatus() {
-        return find("abortion").orElse("error");
-    }
-
-    public String getStripClubStatus() {
-        return find("strip clubs").orElse("error");
-    }
-
-    public String getProvocativeStatus() {
-        return find("provocative").orElse("error");
-    }
-
-    public String getDeathGoreStatus() {
-        return find("porn").orElse("error");
-    }
-
-    public String getTobaccoStatus() {
-        return find("tobacco").orElse("error");
-    }
-
-    public String getDrugsStatus() {
-        return find("drugs").orElse("error");
-    }
-
-    public String getWeaponsStatus() {
-        return find("weapons").orElse("error");
-    }
-
-    public String getGamblingStatus() {
-        return find("gambling").orElse("error");
-    }
-
-    public String getSuicideStatus() {
-        return find("suicide").orElse("error");
-    }
-
-    public void allowPorn() {
-        findAndDo("porn", "allow");
-    }
-
-    public void blockPorn() {
-        findAndDo("porn", "block");
-    }
-
-    public void allowMatureContent() {
-        findAndDo("mature content", "allow");
-    }
-
-    public void blockMatureContent() {
-        findAndDo("mature content", "block");
-    }
-
-    public void allowAdultNovelty() {
-        findAndDo("adult novelty", "allow");
-    }
-
-    public void blockAdultNovelty() {
-        findAndDo("adult novelty", "block");
-    }
-
-    public void allowAnime() {
-        findAndDo("anime", "allow");
-    }
-
-    public void blockAnime() {
-        findAndDo("anime", "block");
-    }
-
-    public void allowNudity() {
-        findAndDo("nudity", "allow");
-    }
-
-    public void blockNudity() {
-        findAndDo("nudity", "block");
-    }
-
-    public void allowAbortion() {
-        findAndDo("abortion", "allow");
-    }
-
-    public void blockAbortion() {
-        findAndDo("abortion", "block");
-    }
-
-    public void allowStripClubs() {
-        findAndDo("strip clubs", "allow");
-    }
-
-    public void blockStripClubs() {
-        findAndDo("strip clubs", "block");
-    }
-
-    public void allowProvocative() {
-        findAndDo("provocative", "allow");
-    }
-
-    public void blockProvocative() {
-        findAndDo("provocative", "block");
-    }
-
-    public void allowDeathGore() {
-        findAndDo("death gore", "allow");
-    }
-
-    public void blockDeathGore() {
-        findAndDo("death gore", "block");
-    }
-
-    public void allowTobacco() {
-        findAndDo("tobacco", "allow");
-    }
-
-    public void blockTobacco() {
-        findAndDo("tobacco", "block");
-    }
-
-    public void allowDrugs() {
-        findAndDo("drugs", "allow");
-    }
-
-    public void blockDrugs() {
-        findAndDo("drugs", "block");
-    }
-
-    public void allowWeapons() {
-        findAndDo("weapons", "allow");
-    }
-
-    public void blockWeapons() {
-        findAndDo("weapons", "block");
-    }
-
-    public void allowGambling() {
-        findAndDo("gambling", "allow");
-    }
-
-    public void blockGambling() {
-        findAndDo("gambling", "block");
-    }
-
-    public void allowSuicide() {
-        findAndDo("suicide", "allow");
-    }
-
-    public void blockSuicide() {
-        findAndDo("suicide", "block");
+        return collect;
     }
 }

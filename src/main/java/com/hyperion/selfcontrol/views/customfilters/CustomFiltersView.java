@@ -32,7 +32,6 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
 import com.hyperion.selfcontrol.views.main.MainView;
 
 import java.net.MalformedURLException;
@@ -59,8 +58,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     private TextField name = new TextField();
     private TextField status = new TextField();
 
-    private Button setAllowed = new Button("Set Active");
-    private Button setBlocked = new Button("Set Inactive");
+    private Button setActive = new Button("Set Active");
+    private Button setInactive = new Button("Set Inactive");
 
     private Binder<CustomFilterCategory> binder;
 
@@ -87,7 +86,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         binder.bindInstanceFields(this);
 
         // the grid valueChangeEvent will clear the form too
-        setAllowed.addClickListener(e -> {
+        setActive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
@@ -99,7 +98,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                         capabilities);
 
                 Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), true))
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), "block"))
                         .map(NetNannyStatusJob::getNetNannyCustomStatuses);
                 filterCategories.ifPresent(items -> statuses.setItems(items));
             } catch (MalformedURLException ex) {
@@ -111,7 +110,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             }
         });
 
-        setBlocked.addClickListener(e -> {
+        setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
@@ -123,7 +122,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                         capabilities);
 
                 Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), false))
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), "inactive"))
                         .map(NetNannyStatusJob::getNetNannyCustomStatuses);
                 filterCategories.ifPresent(items -> statuses.setItems(items));
             } catch (MalformedURLException ex) {
@@ -159,9 +158,9 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         buttonLayout.setId("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
-        setAllowed.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        setBlocked.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(setAllowed, setBlocked);
+        setActive.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        setInactive.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        buttonLayout.add(setActive, setInactive);
         editorDiv.add(buttonLayout);
     }
 

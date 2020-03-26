@@ -16,7 +16,7 @@ public class NetNannyStatusJob {
     private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
 
     public static List<FilterCategory> getNetNannyStatuses(NetNannyProfile profile) {
-        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu();
+        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu("net nanny content filters");
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
             log.error("Restrictions menu not present");
@@ -28,7 +28,7 @@ public class NetNannyStatusJob {
     }
 
     public static List<CustomFilterCategory> getNetNannyCustomStatuses(NetNannyProfile profile) {
-        Optional<NetNannyFiltersPage> filtersOpt = profile.clickCustomFiltersMenu();
+        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu("custom content filters");
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
             log.error("Restrictions menu not present");
