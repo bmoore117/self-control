@@ -11,8 +11,8 @@ public class NetNannySetCategoryJob {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
 
-    public static Optional<NetNannyProfile> setCategory(NetNannyProfile profile, String category, String action) {
-        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu("net nanny content filters");
+    public static Optional<NetNannyProfile> setCategory(NetNannyProfile profile, String menuItem, String category, String action) {
+        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu(menuItem);
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
             log.error("Restrictions menu not present");

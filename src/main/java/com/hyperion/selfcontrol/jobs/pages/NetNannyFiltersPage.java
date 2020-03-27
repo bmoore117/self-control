@@ -36,12 +36,19 @@ public class NetNannyFiltersPage {
     }
 
     public void findAndDo(String category, String action) {
-        Optional<WebElement> li = modal.findElements(By.tagName("li")).stream()
-                .filter(e -> e.getText().toLowerCase().contains(category))
-                .findFirst();
+        Optional<WebElement> row;
+        if (modal.getText().toLowerCase().contains("custom content filters")) {
+            row = modal.findElements(By.cssSelector("div.filter-item")).stream()
+                    .filter(e -> e.getText().toLowerCase().contains(category))
+                    .findFirst();
+        } else {
+            row = modal.findElements(By.tagName("li")).stream()
+                    .filter(e -> e.getText().toLowerCase().contains(category))
+                    .findFirst();
+        }
 
-        if (li.isPresent()) {
-            Optional<WebElement> allow = li.get().findElements(By.tagName("button")).stream()
+        if (row.isPresent()) {
+            Optional<WebElement> allow = row.get().findElements(By.tagName("button")).stream()
                     .filter(b -> b.getText().toLowerCase().contains(action))
                     .findFirst();
 

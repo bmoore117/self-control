@@ -100,7 +100,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                         capabilities);
 
                 Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), "allow"))
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "net nanny content filters", category.getName(), "allow"))
                         .map(NetNannyStatusJob::getNetNannyStatuses);
                 filterCategories.ifPresent(items -> statuses.setItems(items));
             } catch (MalformedURLException ex) {
@@ -124,7 +124,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                         capabilities);
 
                 Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, category.getName(), "block"))
+                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "net nanny content filters", category.getName(), "block"))
                         .map(NetNannyStatusJob::getNetNannyStatuses);
                 filterCategories.ifPresent(items -> statuses.setItems(items));
             } catch (MalformedURLException ex) {
