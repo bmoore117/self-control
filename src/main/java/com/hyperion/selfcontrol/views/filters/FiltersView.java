@@ -1,10 +1,13 @@
 package com.hyperion.selfcontrol.views.filters;
 
+import com.hyperion.selfcontrol.Pair;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
+import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -59,6 +62,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
     private TextField name = new TextField();
     private TextField status = new TextField();
+    private Checkbox checkbox;
 
     private Button setAllowed = new Button("Set Allowed");
     private Button setBlocked = new Button("Set Blocked");
@@ -136,6 +140,26 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             }
         });
 
+        checkbox = new Checkbox();
+        checkbox.addClickListener(e -> {
+            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+            WebDriver driver = null;
+            try {
+                driver = new RemoteWebDriver(
+                        new URL("http://0.0.0.0:4444/wd/hub"),
+                        capabilities);
+
+                Optional<NetNannyProfile> profileOpt = NetNannyBaseJob.navigateToProfile(driver, credentialService);
+                profileOpt.ifPresent(profile -> profile.setForceSafeSearch(checkbox.getValue()));
+            } catch (MalformedURLException ex) {
+                log.error("Malformed selenium host url", ex);
+            } finally {
+                if (driver != null) {
+                    driver.close();
+                }
+            }
+        });
+
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
 
@@ -152,6 +176,8 @@ public class FiltersView extends Div implements AfterNavigationObserver {
         addFormItem(editorDiv, formLayout, name, "Category");
         addFormItem(editorDiv, formLayout, status, "Status");
         createButtonLayout(editorDiv);
+        FormLayout safeSearchLayout = new FormLayout();
+        addFormItem(editorDiv, safeSearchLayout, checkbox, "Force SafeSearch");
         splitLayout.addToSecondary(editorDiv);
     }
 
@@ -204,9 +230,13 @@ public class FiltersView extends Div implements AfterNavigationObserver {
     }
 
     public void doAfterNavigation(WebDriver driver) {
-        Optional<List<FilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                .map(NetNannyStatusJob::getNetNannyStatuses);
-        filterCategories.ifPresent(categories -> statuses.setItems(categories));
+        // insert here
+        Optional<Pair<Boolean, List<FilterCategory>>> resultsOpt = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                .map(profile -> new Pair<>(profile.isForceSafeSearch(), NetNannyStatusJob.getNetNannyStatuses(profile)));
+        resultsOpt.ifPresent(results -> {
+            checkbox.setValue(results.getFirst());
+            statuses.setItems(results.getSecond());
+        });
     }
 
     private void populateForm(FilterCategory value) {
