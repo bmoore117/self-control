@@ -1,6 +1,5 @@
 package com.hyperion.selfcontrol.views.credentials;
 
-import com.hyperion.selfcontrol.backend.BackendService;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.views.main.MainView;
@@ -30,9 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CredentialsView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
-
-    @Autowired
-    private BackendService service;
 
     private CredentialService credentialService;
 

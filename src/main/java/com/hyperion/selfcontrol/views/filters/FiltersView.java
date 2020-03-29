@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.hyperion.selfcontrol.backend.BackendService;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -35,7 +34,6 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
 import com.hyperion.selfcontrol.views.main.MainView;
 
 import java.net.MalformedURLException;
@@ -50,9 +48,6 @@ import java.util.Optional;
 public class FiltersView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(FiltersView.class);
-
-    @Autowired
-    private BackendService service;
 
     private CredentialService credentialService;
 

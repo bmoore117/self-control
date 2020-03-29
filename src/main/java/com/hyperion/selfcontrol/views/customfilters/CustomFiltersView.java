@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.hyperion.selfcontrol.backend.BackendService;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -46,9 +45,6 @@ import java.util.Optional;
 public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFiltersView.class);
-
-    @Autowired
-    private BackendService service;
 
     private CredentialService credentialService;
 
