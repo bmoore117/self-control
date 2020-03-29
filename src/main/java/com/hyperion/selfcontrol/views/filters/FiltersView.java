@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Route(value = "filters", layout = MainView.class)
-@RouteAlias(value = "", layout = MainView.class)
 @PageTitle("Master-Detail")
 @CssImport(value = "styles/views/filters/filters-view.css", include = "lumo-badge")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
@@ -55,7 +54,6 @@ public class FiltersView extends Div implements AfterNavigationObserver {
     @Autowired
     private BackendService service;
 
-    @Autowired
     private CredentialService credentialService;
 
     private Grid<FilterCategory> statuses;
@@ -69,7 +67,9 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
     private Binder<FilterCategory> binder;
 
-    public FiltersView() {
+    @Autowired
+    public FiltersView(CredentialService credentialService) {
+        this.credentialService = credentialService;
         setId("master-detail-view");
         // Configure Grid
         statuses = new Grid<>();
@@ -115,6 +115,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
+        setAllowed.setEnabled(credentialService.isEnabled());
 
         setBlocked.addClickListener(e -> {
             FilterCategory category = statuses.asSingleSelect().getValue();
@@ -139,6 +140,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
+        setBlocked.setEnabled(credentialService.isEnabled());
 
         checkbox = new Checkbox();
         checkbox.addClickListener(e -> {
@@ -159,6 +161,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
+        checkbox.setEnabled(credentialService.isEnabled());
 
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
@@ -212,19 +215,21 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(
-                    new URL("http://0.0.0.0:4444/wd/hub"),
-                    capabilities);
+        if (credentialService.isEnabled()) {
+            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+            WebDriver driver = null;
+            try {
+                driver = new RemoteWebDriver(
+                        new URL("http://0.0.0.0:4444/wd/hub"),
+                        capabilities);
 
-            doAfterNavigation(driver);
-        } catch (MalformedURLException e) {
-            log.error("Malformed selenium host url", e);
-        } finally {
-            if (driver != null) {
-                driver.close();
+                doAfterNavigation(driver);
+            } catch (MalformedURLException e) {
+                log.error("Malformed selenium host url", e);
+            } finally {
+                if (driver != null) {
+                    driver.close();
+                }
             }
         }
     }

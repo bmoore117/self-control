@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.hyperion.selfcontrol.views.credentials.CredentialsView;
 import com.hyperion.selfcontrol.views.customfilters.CustomFiltersView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
@@ -24,10 +25,10 @@ import com.hyperion.selfcontrol.views.filters.FiltersView;
 /**
  * The main view is a top-level placeholder for other views.
  */
+@Push
 @JsModule("./styles/shared-styles.js")
 @PWA(name = "Self Control", shortName = "Self Control")
 @Theme(value = Lumo.class, variant = Lumo.LIGHT)
-@Push
 public class MainView extends AppLayout {
 
     private final Tabs menu;
@@ -52,6 +53,7 @@ public class MainView extends AppLayout {
         final List<Tab> tabs = new ArrayList<>();
         tabs.add(createTab("Filters", FiltersView.class));
         tabs.add(createTab("Custom Filters", CustomFiltersView.class));
+        tabs.add(createTab("Credentials", CredentialsView.class));
         return tabs.toArray(new Tab[tabs.size()]);
     }
 

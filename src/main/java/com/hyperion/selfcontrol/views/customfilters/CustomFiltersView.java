@@ -50,7 +50,6 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     @Autowired
     private BackendService service;
 
-    @Autowired
     private CredentialService credentialService;
 
     private Grid<CustomFilterCategory> statuses;
@@ -63,7 +62,9 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private Binder<CustomFilterCategory> binder;
 
-    public CustomFiltersView() {
+    @Autowired
+    public CustomFiltersView(CredentialService credentialService) {
+        this.credentialService = credentialService;
         setId("master-detail-view");
         // Configure Grid
         statuses = new Grid<>();
@@ -109,6 +110,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
+        setActive.setEnabled(credentialService.isEnabled());
 
         setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
@@ -133,6 +135,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
+        setInactive.setEnabled(credentialService.isEnabled());
 
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
@@ -184,19 +187,21 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(
-                    new URL("http://0.0.0.0:4444/wd/hub"),
-                    capabilities);
+        if (credentialService.isEnabled()) {
+            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+            WebDriver driver = null;
+            try {
+                driver = new RemoteWebDriver(
+                        new URL("http://0.0.0.0:4444/wd/hub"),
+                        capabilities);
 
-            doAfterNavigation(driver);
-        } catch (MalformedURLException e) {
-            log.error("Malformed selenium host url", e);
-        } finally {
-            if (driver != null) {
-                driver.close();
+                doAfterNavigation(driver);
+            } catch (MalformedURLException e) {
+                log.error("Malformed selenium host url", e);
+            } finally {
+                if (driver != null) {
+                    driver.close();
+                }
             }
         }
     }
