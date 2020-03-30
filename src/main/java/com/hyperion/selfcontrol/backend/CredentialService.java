@@ -17,7 +17,7 @@ public class CredentialService {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialService.class);
 
-    public static final String FILE_LOCATION = "C:\\Users\\moore\\credentials.json";
+    public static final String FILE_LOCATION = "C:\\Users\\ben-local\\credentials.json";
 
     private JSONObject fileContents;
 
