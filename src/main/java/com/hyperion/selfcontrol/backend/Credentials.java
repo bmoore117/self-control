@@ -28,6 +28,10 @@ public class Credentials {
         this.password = password;
     }
 
+    public String getSanitizedPassword() {
+        return "*****";
+    }
+
     public String getTag() {
         return tag;
     }

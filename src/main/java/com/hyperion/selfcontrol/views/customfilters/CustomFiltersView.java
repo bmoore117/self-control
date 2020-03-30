@@ -131,7 +131,6 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
-        setInactive.setEnabled(credentialService.isEnabled());
 
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
@@ -183,21 +182,20 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        if (credentialService.isEnabled()) {
-            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-            WebDriver driver = null;
-            try {
-                driver = new RemoteWebDriver(
-                        new URL("http://0.0.0.0:4444/wd/hub"),
-                        capabilities);
 
-                doAfterNavigation(driver);
-            } catch (MalformedURLException e) {
-                log.error("Malformed selenium host url", e);
-            } finally {
-                if (driver != null) {
-                    driver.close();
-                }
+        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(
+                    new URL("http://0.0.0.0:4444/wd/hub"),
+                    capabilities);
+
+            doAfterNavigation(driver);
+        } catch (MalformedURLException e) {
+            log.error("Malformed selenium host url", e);
+        } finally {
+            if (driver != null) {
+                driver.close();
             }
         }
     }

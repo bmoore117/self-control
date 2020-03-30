@@ -54,7 +54,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         credentials.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         credentials.setHeightFull();
         credentials.addColumn(Credentials::getUsername).setHeader("Username");
-        credentials.addColumn(Credentials::getPassword).setHeader("Password");
+        credentials.addColumn(Credentials::getSanitizedPassword).setHeader("Password");
         credentials.addColumn(Credentials::getTag).setHeader("Tag");
 
         //when a row is selected or deselected, populate form

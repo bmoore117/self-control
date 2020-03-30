@@ -135,7 +135,6 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                 }
             }
         });
-        setBlocked.setEnabled(credentialService.isEnabled());
 
         checkbox = new Checkbox();
         checkbox.addClickListener(e -> {
@@ -148,6 +147,9 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
                 Optional<NetNannyProfile> profileOpt = NetNannyBaseJob.navigateToProfile(driver, credentialService);
                 profileOpt.ifPresent(profile -> profile.setForceSafeSearch(checkbox.getValue()));
+                if (!credentialService.isEnabled() && checkbox.getValue()) {
+                    checkbox.setEnabled(false);
+                }
             } catch (MalformedURLException ex) {
                 log.error("Malformed selenium host url", ex);
             } finally {
@@ -199,7 +201,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
     }
 
     private void addFormItem(Div wrapper, FormLayout formLayout,
-            AbstractField field, String fieldName) {
+                             AbstractField field, String fieldName) {
         formLayout.addFormItem(field, fieldName);
         wrapper.add(formLayout);
         field.getElement().getClassList().add("full-width");
@@ -210,21 +212,19 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        if (credentialService.isEnabled()) {
-            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-            WebDriver driver = null;
-            try {
-                driver = new RemoteWebDriver(
-                        new URL("http://0.0.0.0:4444/wd/hub"),
-                        capabilities);
+        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(
+                    new URL("http://0.0.0.0:4444/wd/hub"),
+                    capabilities);
 
-                doAfterNavigation(driver);
-            } catch (MalformedURLException e) {
-                log.error("Malformed selenium host url", e);
-            } finally {
-                if (driver != null) {
-                    driver.close();
-                }
+            doAfterNavigation(driver);
+        } catch (MalformedURLException e) {
+            log.error("Malformed selenium host url", e);
+        } finally {
+            if (driver != null) {
+                driver.close();
             }
         }
     }
@@ -235,6 +235,9 @@ public class FiltersView extends Div implements AfterNavigationObserver {
                 .map(profile -> new Pair<>(profile.isForceSafeSearch(), NetNannyStatusJob.getNetNannyStatuses(profile)));
         resultsOpt.ifPresent(results -> {
             checkbox.setValue(results.getFirst());
+            if (!results.getFirst()) {
+                checkbox.setEnabled(true);
+            }
             statuses.setItems(results.getSecond());
         });
     }
