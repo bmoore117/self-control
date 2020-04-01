@@ -2,12 +2,30 @@ package com.hyperion.selfcontrol.views.customfilters;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
+import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
+import com.hyperion.selfcontrol.views.main.MainView;
+import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -15,28 +33,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.hyperion.selfcontrol.views.main.MainView;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Route(value = "customfilters", layout = MainView.class)
 @PageTitle("Custom Filters")
@@ -87,49 +90,21 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-            WebDriver driver = null;
-            try {
-                driver = new RemoteWebDriver(
-                        new URL("http://0.0.0.0:4444/wd/hub"),
-                        capabilities);
-
-                Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "block"))
-                        .map(NetNannyStatusJob::getNetNannyCustomStatuses);
-                filterCategories.ifPresent(items -> statuses.setItems(items));
-            } catch (MalformedURLException ex) {
-                log.error("Malformed selenium host url", ex);
-            } finally {
-                if (driver != null) {
-                    driver.close();
-                }
-            }
+            Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "block"))
+                    .map(NetNannyStatusJob::getNetNannyCustomStatuses);
+            Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
+            composedFunction.get().ifPresent(items -> statuses.setItems(items));
         });
-        setActive.setEnabled(credentialService.isEnabled());
 
         setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-            WebDriver driver = null;
-            try {
-                driver = new RemoteWebDriver(
-                        new URL("http://0.0.0.0:4444/wd/hub"),
-                        capabilities);
-
-                Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "inactive"))
-                        .map(NetNannyStatusJob::getNetNannyCustomStatuses);
-                filterCategories.ifPresent(items -> statuses.setItems(items));
-            } catch (MalformedURLException ex) {
-                log.error("Malformed selenium host url", ex);
-            } finally {
-                if (driver != null) {
-                    driver.close();
-                }
-            }
+            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "inactive"));
+            Runnable composedFunction = Utils.composeWithDriver(function);
+            credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
 
         SplitLayout splitLayout = new SplitLayout();

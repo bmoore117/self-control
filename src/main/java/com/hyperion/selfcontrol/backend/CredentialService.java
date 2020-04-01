@@ -93,16 +93,31 @@ public class CredentialService {
         }
     }
 
-    private <T, R> void runWithDelay(String name, Function<T, R> function, T input) {
+    public <T, R> void runWithDelay(String name, Function<T, R> function, T input) {
         long delay = fileContents.getLong("delay");
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
+                log.info("Running scheduled task: " + name);
                 function.apply(input);
                 writeFile();
             }
         };
         Timer timer = new Timer(name);
+        log.info("Scheduling task: " + name);
         timer.schedule(task, delay);
+    }
+
+    public void runWithDelay(String name, Runnable action) {
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                log.info("Running scheduled task: " + name);
+                action.run();
+            }
+        };
+        Timer timer = new Timer(name);
+        log.info("Scheduling task: " + name);
+        timer.schedule(task, getDelay());
     }
 }
