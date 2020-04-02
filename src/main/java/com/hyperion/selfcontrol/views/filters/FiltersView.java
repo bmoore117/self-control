@@ -94,7 +94,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, "net nanny content filters", category.getName(), "allow"));
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService,"net nanny content filters", category.getName(), "allow"));
             Runnable composedFunction = Utils.composeWithDriver(function);
             credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
@@ -104,7 +104,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Function<WebDriver, Optional<List<FilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "net nanny content filters", category.getName(), "block"))
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService,"net nanny content filters", category.getName(), "block"))
                     .map(NetNannyStatusJob::getNetNannyStatuses);
             Supplier<Optional<List<FilterCategory>>> composedFunction = Utils.composeWithDriver(function);
             composedFunction.get().ifPresent(items -> statuses.setItems(items));
@@ -115,12 +115,14 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             // value here is new value, not old value - it is the value after clicking
             if (!checkbox.getValue()) {
                 // if safe search not currently enabled, run immediately and enable
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService).ifPresent(profile -> profile.setForceSafeSearch(false));
+                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                        .ifPresent(profile -> profile.setForceSafeSearch(false, credentialService));
                 Runnable withDriver = Utils.composeWithDriver(function);
                 credentialService.runWithDelay("Disable Force SafeSearch", withDriver);
             } else {
                 // disable on delay
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService).ifPresent(profile -> profile.setForceSafeSearch(true));
+                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                        .ifPresent(profile -> profile.setForceSafeSearch(true, credentialService));
                 Runnable withDriver = Utils.composeWithDriver(function);
                 withDriver.run();
             }

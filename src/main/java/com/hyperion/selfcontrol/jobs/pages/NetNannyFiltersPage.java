@@ -1,7 +1,9 @@
 package com.hyperion.selfcontrol.jobs.pages;
 
+import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
+import com.hyperion.selfcontrol.backend.config.ContentFilter;
 import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -35,24 +37,46 @@ public class NetNannyFiltersPage {
         return new NetNannyProfile(driver);
     }
 
-    public void findAndDo(String category, String action) {
+    public void findAndDo(CredentialService credentialService, String category, String action) {
         Optional<WebElement> row;
+        boolean isCustomContentFilter;
         if (modal.getText().toLowerCase().contains("custom content filters")) {
+            isCustomContentFilter = true;
             row = modal.findElements(By.cssSelector("div.filter-item")).stream()
                     .filter(e -> e.getText().toLowerCase().contains(category))
                     .findFirst();
         } else {
+            isCustomContentFilter = false;
             row = modal.findElements(By.tagName("li")).stream()
                     .filter(e -> e.getText().toLowerCase().contains(category))
                     .findFirst();
         }
 
         if (row.isPresent()) {
-            Optional<WebElement> allow = row.get().findElements(By.tagName("button")).stream()
+            Optional<WebElement> button = row.get().findElements(By.tagName("button")).stream()
                     .filter(b -> b.getText().toLowerCase().contains(action))
                     .findFirst();
 
-            allow.ifPresent(WebElement::click);
+            button.ifPresent(WebElement::click);
+
+            if (isCustomContentFilter) {
+                updateContentFilters(credentialService.getConfig().getState().getCustomContentFilters(), category, action);
+            } else {
+                updateContentFilters(credentialService.getConfig().getState().getContentFilters(), category, action);
+            }
+            credentialService.writeFile();
+        }
+    }
+
+    private void updateContentFilters(List<ContentFilter> contentFilters, String category, String action) {
+        Optional<ContentFilter> target = contentFilters.stream()
+                .filter(c -> c.getName().equals(category))
+                .findFirst();
+
+        if (target.isPresent()) {
+            target.get().setStatus(action);
+        } else {
+            contentFilters.add(new ContentFilter(category, action));
         }
     }
 

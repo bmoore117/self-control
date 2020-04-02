@@ -91,7 +91,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "block"))
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService, "custom content filters", category.getName(), "block"))
                     .map(NetNannyStatusJob::getNetNannyCustomStatuses);
             Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
             composedFunction.get().ifPresent(items -> statuses.setItems(items));
@@ -102,7 +102,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, "custom content filters", category.getName(), "inactive"));
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService, "custom content filters", category.getName(), "inactive"));
             Runnable composedFunction = Utils.composeWithDriver(function);
             credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });

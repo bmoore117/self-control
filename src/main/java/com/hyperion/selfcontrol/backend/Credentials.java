@@ -6,7 +6,14 @@ public class Credentials {
     private String password;
     private String tag;
 
-    public Credentials(String password, String tag, String username) {
+    public Credentials() {}
+
+    public Credentials(String password, String username) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public Credentials(String password, String username, String tag) {
         this.username = username;
         this.password = password;
         this.tag = tag;
@@ -26,10 +33,6 @@ public class Credentials {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getSanitizedPassword() {
-        return "*****";
     }
 
     public String getTag() {

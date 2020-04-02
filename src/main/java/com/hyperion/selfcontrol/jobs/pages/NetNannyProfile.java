@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.jobs.pages;
 
+import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -89,7 +90,7 @@ public class NetNannyProfile {
         }
     }
 
-    public void setForceSafeSearch(boolean enabled) {
+    public void setForceSafeSearch(boolean enabled, CredentialService credentialService) {
         if (restrictions.isEmpty()) {
             log.error("Restrictions items not found");
         }
@@ -102,9 +103,13 @@ public class NetNannyProfile {
             if (!checkBox.isSelected() && enabled) {
                 log.info("Clicking checkbox on");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
+                credentialService.getConfig().getState().setForceSafeSearch(true);
+                credentialService.writeFile();
             } else if (checkBox.isSelected() && !enabled) {
                 log.info("Clicking checkbox off");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
+                credentialService.getConfig().getState().setForceSafeSearch(false);
+                credentialService.writeFile();
             }
         } else {
             log.error("safe search item not found");

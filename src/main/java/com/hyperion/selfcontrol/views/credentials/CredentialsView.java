@@ -42,7 +42,6 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private TextField delay = new TextField();
     private Button saveDelay = new Button("Save");
 
-
     private Binder<Credentials> binder;
 
     @Autowired
@@ -54,7 +53,14 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         credentials.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         credentials.setHeightFull();
         credentials.addColumn(Credentials::getUsername).setHeader("Username");
-        credentials.addColumn(Credentials::getSanitizedPassword).setHeader("Password");
+        credentials.addColumn(credentials -> {
+            int length = credentials.getPassword().length();
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < length; i++) {
+                builder.append("*");
+            }
+            return builder.toString();
+        }).setHeader("Password");
         credentials.addColumn(Credentials::getTag).setHeader("Tag");
 
         //when a row is selected or deselected, populate form
@@ -68,9 +74,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
         // the grid valueChangeEvent will clear the form too
         saveCredentials.addClickListener(e -> {
-            Credentials credentials = new Credentials(password.getValue(), tag.getValue(), username.getValue());
+            Credentials credentials = new Credentials(password.getValue(), username.getValue());
             this.credentials.asSingleSelect().clear();
-            credentialService.setCredentials(credentials);
+            credentialService.setCredentials(credentials, tag.getValue());
             this.credentials.setItems(credentialService.getCredentials());
         });
         saveCredentials.setEnabled(credentialService.isEnabled());
