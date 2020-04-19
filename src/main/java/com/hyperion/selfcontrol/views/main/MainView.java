@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.hyperion.selfcontrol.views.blockadd.BlockAddView;
 import com.hyperion.selfcontrol.views.credentials.CredentialsView;
 import com.hyperion.selfcontrol.views.customfilters.CustomFiltersView;
 import com.vaadin.flow.component.Component;
@@ -54,6 +55,7 @@ public class MainView extends AppLayout {
         tabs.add(createTab("Filters", FiltersView.class));
         tabs.add(createTab("Custom Filters", CustomFiltersView.class));
         tabs.add(createTab("Credentials", CredentialsView.class));
+        tabs.add(createTab("Block/Add", BlockAddView.class));
         return tabs.toArray(new Tab[tabs.size()]);
     }
 

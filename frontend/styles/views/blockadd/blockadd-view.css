@@ -1,0 +1,16 @@
+#master-detail-view {
+    display: block;
+    height: 100%;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+:host {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+}
+
+.marginated {
+    margin: 1em;
+}
