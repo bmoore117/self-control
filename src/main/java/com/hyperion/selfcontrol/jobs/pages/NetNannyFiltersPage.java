@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.jobs.pages;
 
+import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
@@ -18,12 +19,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.hyperion.selfcontrol.jobs.NetNannyBaseJob.scrollIntoView;
+
 public class NetNannyFiltersPage {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyFiltersPage.class);
 
     private WebDriver driver;
     private WebElement modal;
+
+    public static final String CONTENT_FILTERS = "net nanny content filters";
+    public static final String CUSTOM_CONTENT_FILTERS = "custom content filters";
 
     public NetNannyFiltersPage(WebDriver driver, WebElement modal) {
         this.driver = driver;
@@ -37,34 +43,44 @@ public class NetNannyFiltersPage {
         return new NetNannyProfile(driver);
     }
 
-    public void findAndDo(CredentialService credentialService, String category, String action) {
-        Optional<WebElement> row;
-        boolean isCustomContentFilter;
-        if (modal.getText().toLowerCase().contains("custom content filters")) {
-            isCustomContentFilter = true;
-            row = modal.findElements(By.cssSelector("div.filter-item")).stream()
-                    .filter(e -> e.getText().toLowerCase().contains(category))
-                    .findFirst();
-        } else {
-            isCustomContentFilter = false;
-            row = modal.findElements(By.tagName("li")).stream()
-                    .filter(e -> e.getText().toLowerCase().contains(category))
-                    .findFirst();
-        }
-
-        if (row.isPresent()) {
-            Optional<WebElement> button = row.get().findElements(By.tagName("button")).stream()
-                    .filter(b -> b.getText().toLowerCase().contains(action))
-                    .findFirst();
-
-            button.ifPresent(WebElement::click);
-
-            if (isCustomContentFilter) {
-                updateContentFilters(credentialService.getConfig().getState().getCustomContentFilters(), category, action);
+    public void findAndDo(CredentialService credentialService, List<AbstractFilterCategory> filterCategories, boolean writeFile) {
+        for (AbstractFilterCategory filterCategory : filterCategories) {
+            Optional<WebElement> row;
+            boolean isCustomContentFilter;
+            List<WebElement> rows;
+            if (modal.getText().toLowerCase().contains(CUSTOM_CONTENT_FILTERS)) {
+                isCustomContentFilter = true;
+                rows = modal.findElements(By.cssSelector("div.filter-item"));
             } else {
-                updateContentFilters(credentialService.getConfig().getState().getContentFilters(), category, action);
+                isCustomContentFilter = false;
+                rows = modal.findElements(By.tagName("li"));
             }
-            credentialService.writeFile();
+            row = rows.stream()
+                    .filter(e -> {
+                        if (!e.isDisplayed()) {
+                            scrollIntoView(e, driver);
+                        }
+                        return e.getText().toLowerCase().contains(filterCategory.getName().toLowerCase());
+                    }).findFirst();
+
+            if (row.isPresent()) {
+                Optional<WebElement> button = row.get().findElements(By.tagName("button")).stream()
+                        .filter(b -> b.getText().toLowerCase().contains(filterCategory.getStatus().toLowerCase()))
+                        .findFirst();
+
+                button.ifPresent(WebElement::click);
+
+                if (writeFile) {
+                    if (isCustomContentFilter) {
+                        updateContentFilters(credentialService.getConfig().getState().getCustomContentFilters(), filterCategory.getName(), filterCategory.getStatus());
+                    } else {
+                        updateContentFilters(credentialService.getConfig().getState().getContentFilters(), filterCategory.getName(), filterCategory.getStatus());
+                    }
+                    credentialService.writeFile();
+                }
+            } else {
+                log.warn("Expected row not present: " + filterCategory.getName());
+            }
         }
     }
 
@@ -84,7 +100,7 @@ public class NetNannyFiltersPage {
         Optional<WebElement> li = modal.findElements(By.tagName("li")).stream()
                 .filter(e -> {
                     if (!e.isDisplayed()) {
-                        NetNannyBaseJob.scrollIntoView(e, driver);
+                        scrollIntoView(e, driver);
                     }
                     return e.getText().toLowerCase().contains(category);
                 }).findFirst();
@@ -110,7 +126,7 @@ public class NetNannyFiltersPage {
         List<FilterCategory> collect = lis.stream()
                 .map(e -> {
                     if (!e.isDisplayed()) {
-                        NetNannyBaseJob.scrollIntoView(e, driver);
+                        scrollIntoView(e, driver);
                     }
                     String[] textParts = e.getText().split("\\W+");
                     StringBuilder category = new StringBuilder();
@@ -140,7 +156,7 @@ public class NetNannyFiltersPage {
         List<CustomFilterCategory> collect = elements.stream()
                 .map(e -> {
                     if (!e.isDisplayed()) {
-                        NetNannyBaseJob.scrollIntoView(e, driver);
+                        scrollIntoView(e, driver);
                     }
                     String[] textParts = e.getText().split("\\W+");
                     StringBuilder category = new StringBuilder();

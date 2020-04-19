@@ -35,11 +35,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
 
 @Route(value = "customfilters", layout = MainView.class)
 @PageTitle("Custom Filters")
@@ -91,7 +94,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService, "custom content filters", category.getName(), "block"))
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CUSTOM_CONTENT_FILTERS,
+                            Collections.singletonList(new CustomFilterCategory(category.getName(), "block"))))
                     .map(NetNannyStatusJob::getNetNannyCustomStatuses);
             Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
             composedFunction.get().ifPresent(items -> statuses.setItems(items));
@@ -102,7 +106,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService, "custom content filters", category.getName(), "inactive"));
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CUSTOM_CONTENT_FILTERS,
+                            Collections.singletonList(new CustomFilterCategory(category.getName(), "inactive"))));
             Runnable composedFunction = Utils.composeWithDriver(function);
             credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });

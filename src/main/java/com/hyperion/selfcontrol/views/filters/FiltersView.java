@@ -37,11 +37,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage.CONTENT_FILTERS;
 
 @Route(value = "filters", layout = MainView.class)
 @PageTitle("Master-Detail")
@@ -94,7 +97,8 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService,"net nanny content filters", category.getName(), "allow"));
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CONTENT_FILTERS,
+                            Collections.singletonList(new FilterCategory(category.getName(), "allow"))));
             Runnable composedFunction = Utils.composeWithDriver(function);
             credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
@@ -104,7 +108,8 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             statuses.asSingleSelect().clear();
 
             Function<WebDriver, Optional<List<FilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategory(profile, credentialService,"net nanny content filters", category.getName(), "block"))
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CONTENT_FILTERS,
+                            Collections.singletonList(new FilterCategory(category.getName(), "block"))))
                     .map(NetNannyStatusJob::getNetNannyStatuses);
             Supplier<Optional<List<FilterCategory>>> composedFunction = Utils.composeWithDriver(function);
             composedFunction.get().ifPresent(items -> statuses.setItems(items));
