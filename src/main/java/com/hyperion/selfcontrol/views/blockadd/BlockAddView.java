@@ -6,7 +6,6 @@ import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.Website;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBlockAddJob;
-import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyBlockAddPage;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.button.Button;
@@ -29,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -46,11 +48,9 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
     private CredentialService credentialService;
 
     private TextField newAllowed;
-    private Button addAllowed;
     private Grid<Website> allowed;
 
     private TextField newBlocked;
-    private Button addBlocked;
     private Grid<Website> blocked;
 
     @Autowired
@@ -63,7 +63,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         top.add(new H3("Allowed Websites"));
         top.setClassName("marginated");
         newAllowed = new TextField();
-        addAllowed = new Button("Allow");
+        Button addAllowed = new Button("Allow");
         addAllowed.addClickListener(event -> {
             String value = newAllowed.getValue();
             Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
@@ -101,7 +101,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         bottom.add(new H3("Blocked Websites"));
         bottom.setClassName("marginated");
         newBlocked = new TextField();
-        addBlocked = new Button("Block");
+        Button addBlocked = new Button("Block");
         addBlocked.addClickListener(event -> {
             String value = newBlocked.getValue();
             Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
