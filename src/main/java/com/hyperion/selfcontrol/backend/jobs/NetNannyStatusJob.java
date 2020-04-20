@@ -1,9 +1,9 @@
-package com.hyperion.selfcontrol.jobs;
+package com.hyperion.selfcontrol.backend.jobs;
 
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
+import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage;
+import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ public class NetNannyStatusJob {
     private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
 
     public static List<FilterCategory> getNetNannyStatuses(NetNannyProfile profile) {
-        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu("net nanny content filters");
+        Optional<NetNannyFiltersPage> filtersOpt = profile.clickFiltersMenu("net nanny content filters");
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
             log.error("Restrictions menu not present");
@@ -28,7 +28,7 @@ public class NetNannyStatusJob {
     }
 
     public static List<CustomFilterCategory> getNetNannyCustomStatuses(NetNannyProfile profile) {
-        Optional<NetNannyFiltersPage> filtersOpt = profile.clickMenu("custom content filters");
+        Optional<NetNannyFiltersPage> filtersOpt = profile.clickFiltersMenu("custom content filters");
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
             log.error("Restrictions menu not present");

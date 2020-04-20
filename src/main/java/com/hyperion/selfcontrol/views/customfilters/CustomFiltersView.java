@@ -3,9 +3,9 @@ package com.hyperion.selfcontrol.views.customfilters;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.Utils;
-import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
-import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
-import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannySetCategoryJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyStatusJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
+import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
 
 @Route(value = "customfilters", layout = MainView.class)
 @PageTitle("Custom Filters")

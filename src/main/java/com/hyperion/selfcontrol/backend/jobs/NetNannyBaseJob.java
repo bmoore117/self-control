@@ -1,9 +1,9 @@
-package com.hyperion.selfcontrol.jobs;
+package com.hyperion.selfcontrol.backend.jobs;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyDashboard;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyLoginPage;
-import com.hyperion.selfcontrol.jobs.pages.NetNannyProfile;
+import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyDashboard;
+import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyLoginPage;
+import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
 import org.openqa.selenium.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

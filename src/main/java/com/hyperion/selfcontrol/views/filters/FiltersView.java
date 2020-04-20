@@ -4,9 +4,9 @@ import com.hyperion.selfcontrol.Pair;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.backend.Utils;
-import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
-import com.hyperion.selfcontrol.jobs.NetNannySetCategoryJob;
-import com.hyperion.selfcontrol.jobs.NetNannyStatusJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannySetCategoryJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyStatusJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.hyperion.selfcontrol.jobs.pages.NetNannyFiltersPage.CONTENT_FILTERS;
+import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CONTENT_FILTERS;
 
 @Route(value = "filters", layout = MainView.class)
 @PageTitle("Master-Detail")
@@ -119,13 +119,13 @@ public class FiltersView extends Div implements AfterNavigationObserver {
         checkbox.addClickListener(e -> {
             // value here is new value, not old value - it is the value after clicking
             if (!checkbox.getValue()) {
-                // if safe search not currently enabled, run immediately and enable
+                // disable on delay
                 Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
                         .ifPresent(profile -> profile.setForceSafeSearch(false, credentialService));
                 Runnable withDriver = Utils.composeWithDriver(function);
                 credentialService.runWithDelay("Disable Force SafeSearch", withDriver);
             } else {
-                // disable on delay
+                // if safe search not currently enabled, run immediately and enable
                 Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
                         .ifPresent(profile -> profile.setForceSafeSearch(true, credentialService));
                 Runnable withDriver = Utils.composeWithDriver(function);

@@ -1,11 +1,10 @@
-package com.hyperion.selfcontrol.jobs.pages;
+package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.backend.config.ContentFilter;
-import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -19,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.hyperion.selfcontrol.jobs.NetNannyBaseJob.scrollIntoView;
+import static com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob.scrollIntoView;
 
 public class NetNannyFiltersPage {
 

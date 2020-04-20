@@ -1,7 +1,7 @@
-package com.hyperion.selfcontrol.jobs.pages;
+package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
-import com.hyperion.selfcontrol.jobs.NetNannyBaseJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -40,7 +40,16 @@ public class NetNannyProfile {
         restrictions = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.restrictions-item")));
     }
 
-    public Optional<NetNannyFiltersPage> clickMenu(String menuItem) {
+    public Optional<NetNannyFiltersPage> clickFiltersMenu(String menuItem) {
+        return openModal(menuItem).map(modal -> new NetNannyFiltersPage(driver, modal));
+    }
+
+    public Optional<NetNannyBlockAddPage> clickBlockAdd() {
+        return openModal("block or allow specific websites").map(modal -> new NetNannyBlockAddPage(modal, driver));
+    }
+
+    public Optional<WebElement> openModal(String menuItem) {
+        log.info("Opening section: " + menuItem);
         if (restrictions.isEmpty()) {
             log.error("Restrictions items not found");
             return Optional.empty();
@@ -52,7 +61,7 @@ public class NetNannyProfile {
         if (filters.isPresent()) {
             filters.get().click();
         } else {
-            log.error("content filters not found");
+            log.error("section not found");
             return Optional.empty();
         }
 
@@ -65,9 +74,8 @@ public class NetNannyProfile {
                 log.info("Scrolling modal into view");
                 NetNannyBaseJob.scrollIntoView(modal, driver);
             }
-            Optional<NetNannyFiltersPage> filtersPage = Optional.of(new NetNannyFiltersPage(driver, modal));
-            log.info("Returning optional: " + filtersPage);
-            return filtersPage;
+            log.info("Returning modal: " + modal);
+            return Optional.of(modal);
         } else {
             return Optional.empty();
         }

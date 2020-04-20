@@ -1,4 +1,4 @@
-package com.hyperion.selfcontrol.jobs.pages;
+package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;

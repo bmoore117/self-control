@@ -1,4 +1,4 @@
-package com.hyperion.selfcontrol.jobs.pages;
+package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
 import org.openqa.selenium.By;
