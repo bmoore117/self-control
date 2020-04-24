@@ -4,6 +4,8 @@ import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -12,6 +14,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -20,6 +23,8 @@ import com.vaadin.flow.router.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Random;
 
 @Route(value = "credentials", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
@@ -107,12 +112,13 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         FormLayout delayLayout = new FormLayout();
         addFormItem(editorDiv, delayLayout, delay, "Delay (ms)");
         createDelayButtonLayout(editorDiv);
+        createPasswordGenerationLayout(editorDiv);
         splitLayout.addToSecondary(editorDiv);
     }
 
     private void createButtonLayout(Div editorDiv) {
         HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.setId("button-layout");
+        buttonLayout.setClassName("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
         saveCredentials.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -122,11 +128,27 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
     private void createDelayButtonLayout(Div editorDiv) {
         HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.setId("button-layout");
+        buttonLayout.setClassName("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
         saveDelay.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         buttonLayout.add(saveDelay);
+        editorDiv.add(buttonLayout);
+    }
+
+    private void createPasswordGenerationLayout(Div editorDiv) {
+        HorizontalLayout buttonLayout = new HorizontalLayout();
+        buttonLayout.setClassName("button-layout");
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        Button generate = new Button("Generate Password");
+        generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        Label passwordLabel = new Label();
+        generate.addClickListener(buttonClickEvent -> {
+            passwordLabel.setText(generatePassword());
+        });
+        buttonLayout.add(generate);
+        buttonLayout.add(passwordLabel);
         editorDiv.add(buttonLayout);
     }
 
@@ -143,6 +165,18 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         formLayout.addFormItem(field, fieldName);
         wrapper.add(formLayout);
         field.getElement().getClassList().add("full-width");
+    }
+
+    private String generatePassword() {
+        int leftLimit = 33; // numeral '0'
+        int rightLimit = 126; // character '~'
+        int targetStringLength = 12;
+        Random random = new Random();
+
+        return random.ints(leftLimit, rightLimit + 1)
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 
     @Override
