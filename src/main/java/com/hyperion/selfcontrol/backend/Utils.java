@@ -5,9 +5,15 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,5 +61,42 @@ public class Utils {
                 }
             }
         };
+    }
+
+    public static int changePassword(String newPassword) {
+        Resource resource = new ClassPathResource("changePassword.ps1");
+        try (InputStream inputStream = resource.getInputStream()) {
+            Files.copy(inputStream, Paths.get("changePassword.ps1"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error unpacking changePassword from classpath", e);
+            return -1;
+        }
+
+        try {
+            ProcessBuilder builder = new ProcessBuilder();
+            builder.directory(new File("."));
+            builder.command("powershell.exe", "-File", "changePassword.ps1", "-password", ("'" + newPassword.replace("'", "''") + "'"));
+
+            Process p = builder.start();
+            p.waitFor();
+
+            try (InputStream stdOut = p.getInputStream(); InputStream stdErr = p.getErrorStream()) {
+                String line;
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stdOut));
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+                reader = new BufferedReader(new InputStreamReader(stdErr));
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+            }
+
+            return p.exitValue();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return -1;
     }
 }

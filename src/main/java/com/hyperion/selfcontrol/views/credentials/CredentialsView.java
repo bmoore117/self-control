@@ -2,10 +2,9 @@ package com.hyperion.selfcontrol.views.credentials;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.Credentials;
+import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -16,14 +15,17 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.router.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Route(value = "credentials", layout = MainView.class)
@@ -137,15 +139,28 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     }
 
     private void createPasswordGenerationLayout(Div editorDiv) {
-        HorizontalLayout buttonLayout = new HorizontalLayout();
+        VerticalLayout buttonLayout = new VerticalLayout();
         buttonLayout.setClassName("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
-        Button generate = new Button("Generate Password");
+        Button generate = new Button("Change Admin Password");
         generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         Label passwordLabel = new Label();
         generate.addClickListener(buttonClickEvent -> {
-            passwordLabel.setText(generatePassword());
+            String password = generatePassword();
+            int status = Utils.changePassword(password);
+            if (status == 0) {
+                credentials.getDataProvider().fetch(new Query<>())
+                        .filter(credentials -> credentials.getTag().contains("local"))
+                        .findFirst()
+                        .ifPresent(item -> {
+                            item.setPassword(password);
+                            credentialService.setCredentials(item, item.getTag());
+                            passwordLabel.setText("New password: " + password);
+                        });
+            } else {
+                passwordLabel.setText("Check logs for error");
+            }
         });
         buttonLayout.add(generate);
         buttonLayout.add(passwordLabel);
