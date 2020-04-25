@@ -64,18 +64,21 @@ public class Utils {
     }
 
     public static int changePassword(String newPassword) {
-        Resource resource = new ClassPathResource("changePassword.ps1");
-        try (InputStream inputStream = resource.getInputStream()) {
-            Files.copy(inputStream, Paths.get("changePassword.ps1"), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            log.error("Error unpacking changePassword from classpath", e);
-            return -1;
+        if (!Files.exists(Paths.get("changePassword.ps1"))) {
+            log.warn("Password script not found, unpacking again");
+            Resource resource = new ClassPathResource("changePassword.ps1");
+            try (InputStream inputStream = resource.getInputStream()) {
+                Files.copy(inputStream, Paths.get("changePassword.ps1"), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                log.error("Error unpacking changePassword from classpath", e);
+                return -1;
+            }
         }
 
         try {
             ProcessBuilder builder = new ProcessBuilder();
             builder.directory(new File("."));
-            builder.command("powershell.exe", "-File", "changePassword.ps1", "-password", ("'" + newPassword.replace("'", "''") + "'"));
+            builder.command("powershell.exe", "-File", "changePassword.ps1", "-password", newPassword);
 
             Process p = builder.start();
             p.waitFor();
@@ -94,7 +97,7 @@ public class Utils {
 
             return p.exitValue();
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            log.error("Error running changePassword.ps1", e);
         }
 
         return -1;

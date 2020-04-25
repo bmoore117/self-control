@@ -156,7 +156,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                         .ifPresent(item -> {
                             item.setPassword(password);
                             credentialService.setCredentials(item, item.getTag());
-                            passwordLabel.setText("New password: " + password);
+                            passwordLabel.setText("Password changed successfully");
                         });
             } else {
                 passwordLabel.setText("Check logs for error");

@@ -4,7 +4,9 @@ param (
 )
 
 $secureString = ConvertTo-SecureString $password -AsPlainText -Force
-Get-LocalUser -Name "*local" | Set-LocalUser -Password $secureString
+$user = Get-LocalUser -Name "*local"
+Write-Host "Changing password for $user"
+$user | Set-LocalUser -Password $secureString
 if ($?) {
     exit 0
 } else {
