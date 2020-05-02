@@ -121,7 +121,7 @@ public class CredentialService {
         for (Map.Entry<String, Credentials> entry : config.getCredentials().entrySet()) {
             if (entry.getKey().contains("net-nanny")) {
                 password = entry.getValue().getPassword();
-                entry.getValue().setPassword(null);
+                entry.getValue().setPassword("null");
             }
         }
 
