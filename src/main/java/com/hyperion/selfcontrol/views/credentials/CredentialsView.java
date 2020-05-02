@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Random;
 
@@ -115,6 +116,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         addFormItem(editorDiv, delayLayout, delay, "Delay (ms)");
         createDelayButtonLayout(editorDiv);
         createPasswordGenerationLayout(editorDiv);
+        createAdminConsoleLayout(editorDiv);
         splitLayout.addToSecondary(editorDiv);
     }
 
@@ -164,6 +166,52 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         });
         buttonLayout.add(generate);
         buttonLayout.add(passwordLabel);
+        editorDiv.add(buttonLayout);
+    }
+
+    private void createAdminConsoleLayout(Div editorDiv) {
+        VerticalLayout buttonLayout = new VerticalLayout();
+        buttonLayout.setClassName("button-layout");
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        Label errorLabel = new Label();
+        Button generate;
+        if (Utils.isLocalAdminActive()) {
+            generate = new Button("Close Local Admin Console");
+            generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            generate.addClickListener(buttonClickEvent -> {
+                Utils.removeShutdownHook();
+                Utils.resetFile();
+                credentialService.writeFile();
+            });
+        } else {
+            generate = new Button("Launch Local Admin Console");
+            generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            generate.addClickListener(buttonClickEvent -> {
+                try {
+                    credentialService.prepForLocalAdmin();
+                } catch (IOException e) {
+                    log.error("Error prepping for local admin", e);
+                    errorLabel.setText("Error prepping for local admin");
+                    return;
+                }
+
+                try {
+                    String pid = Utils.launchAdminConsole();
+                    credentialService.setDelayDirect(0);
+                    Utils.addShutdownHook(pid);
+                } catch (IOException | InterruptedException e) {
+                    log.error("Error starting admin console", e);
+                    errorLabel.setText("Error starting admin console");
+                    credentialService.writeFile();
+                    Utils.removeShutdownHook();
+                }
+            });
+        }
+
+        buttonLayout.add(generate);
+        buttonLayout.add(errorLabel);
         editorDiv.add(buttonLayout);
     }
 

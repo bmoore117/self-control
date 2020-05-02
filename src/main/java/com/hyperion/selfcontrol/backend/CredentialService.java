@@ -22,7 +22,7 @@ public class CredentialService {
     public static final String FILE_LOCATION = "C:\\Users\\ben-local\\credentials.json";
 
     private Config config;
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
     public CredentialService() throws IOException {
         mapper = new ObjectMapper();
@@ -71,6 +71,10 @@ public class CredentialService {
         runWithDelay("Write Delay Timer", writeDelay, delayInMillis);
     }
 
+    public void setDelayDirect(long delayInMillis) {
+        config.setDelay(delayInMillis);
+    }
+
     public void writeFile() {
         try {
             Files.write(Paths.get(FILE_LOCATION), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(config).getBytes());
@@ -109,5 +113,24 @@ public class CredentialService {
 
     public Config getConfig() {
         return config;
+    }
+
+    public void prepForLocalAdmin() throws IOException {
+        config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        String password = null;
+        for (Map.Entry<String, Credentials> entry : config.getCredentials().entrySet()) {
+            if (entry.getKey().contains("net-nanny")) {
+                password = entry.getValue().getPassword();
+                entry.getValue().setPassword(null);
+            }
+        }
+
+        writeFile();
+
+        for (Map.Entry<String, Credentials> entry : config.getCredentials().entrySet()) {
+            if (entry.getKey().contains("net-nanny")) {
+                entry.getValue().setPassword(password);
+            }
+        }
     }
 }
