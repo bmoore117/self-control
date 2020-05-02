@@ -19,7 +19,7 @@ public class CredentialService {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialService.class);
 
-    public static final String FILE_LOCATION = "C:\\Users\\ben-local\\credentials.json";
+    public static final String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
 
     private Config config;
     private final ObjectMapper mapper;

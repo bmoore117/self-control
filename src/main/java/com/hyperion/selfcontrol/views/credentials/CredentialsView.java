@@ -198,9 +198,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                 }
 
                 try {
-                    String pid = Utils.launchAdminConsole();
+                    Utils.launchAdminConsole();
                     credentialService.setDelayDirect(0);
-                    Utils.addShutdownHook(pid);
+                    Utils.addShutdownHook();
                 } catch (IOException | InterruptedException e) {
                     log.error("Error starting admin console", e);
                     errorLabel.setText("Error starting admin console");

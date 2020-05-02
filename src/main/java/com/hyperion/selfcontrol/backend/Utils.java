@@ -131,9 +131,8 @@ public class Utils {
         return pid;
     }
 
-    public static void addShutdownHook(String pid) {
+    public static void addShutdownHook() {
         /*
-
             Flow: launch admin console, expose admin password.
             Hide NN password in RAM, delete from file.
             Add shutdown hook to run script:
