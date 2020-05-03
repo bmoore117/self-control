@@ -108,7 +108,7 @@ public class Utils {
 
     public static String launchAdminConsole() throws InterruptedException, IOException {
         ProcessBuilder builder = new ProcessBuilder();
-        builder.directory(new File("C:\\Users\\moore"));
+        builder.directory(new File("."));
         builder.command("powershell.exe", "-File", "startConsole.ps1");
 
         Process p = builder.start();
@@ -149,7 +149,7 @@ public class Utils {
             by power loss or unexpected restarts. Basically it just saves the hassle of going to pluckeye lockbox to
             restore NN password.
          */
-        if (shutdownHook != null) {
+        if (shutdownHook == null) {
             shutdownHook = new Thread(Utils::resetFile);
         }
 

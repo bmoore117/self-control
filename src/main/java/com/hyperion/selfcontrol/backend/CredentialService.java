@@ -7,26 +7,32 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class CredentialService {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialService.class);
 
-    public static final String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
+    public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
+    public static final String STOCK_PASSWORD = "P@ssw0rd";
 
     private Config config;
     private final ObjectMapper mapper;
 
     public CredentialService() throws IOException {
         mapper = new ObjectMapper();
-        config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        try {
+            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        } catch (FileNotFoundException e) {
+            FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
+            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        }
     }
 
     public String getNetNannyUsername() {
@@ -42,13 +48,18 @@ public class CredentialService {
         writeFile();
     }
 
+    public Optional<Credentials> getLocalAdmin() {
+        return config.getCredentials().entrySet().stream()
+                .filter(entry -> entry.getKey().endsWith("local"))
+                .map(Map.Entry::getValue)
+                .findFirst();
+    }
+
     public List<Credentials> getCredentials() {
         if (isEnabled()) {
-            return config.getCredentials().entrySet().stream()
-                    .map(pair -> new Credentials(pair.getValue().getPassword(),
-                            pair.getValue().getUsername(),
-                            pair.getKey()))
-                    .collect(Collectors.toList());
+            Credentials credentials = config.getCredentials().get("net-nanny");
+            Credentials withTag = new Credentials(credentials.getPassword(), credentials.getUsername(), "net-nanny");
+            return Collections.singletonList(withTag);
         } else {
             return Collections.emptyList();
         }
@@ -115,7 +126,7 @@ public class CredentialService {
         return config;
     }
 
-    public void prepForLocalAdmin() throws IOException {
+    public void liftNetNannyCredentialsToRAM() throws IOException {
         config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         String password = null;
         for (Map.Entry<String, Credentials> entry : config.getCredentials().entrySet()) {

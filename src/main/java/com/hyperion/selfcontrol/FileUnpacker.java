@@ -29,5 +29,21 @@ public class FileUnpacker implements ApplicationRunner {
         } catch (IOException e) {
             log.error("Error unpacking changePassword from classpath", e);
         }
+
+        log.info("Unpacking resetFile script");
+        resource = new ClassPathResource("resetFile.ps1");
+        try (InputStream inputStream = resource.getInputStream()) {
+            Files.copy(inputStream, Paths.get("resetFile.ps1"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error unpacking resetFile from classpath", e);
+        }
+
+        log.info("Unpacking startConsole script");
+        resource = new ClassPathResource("startConsole.ps1");
+        try (InputStream inputStream = resource.getInputStream()) {
+            Files.copy(inputStream, Paths.get("startConsole.ps1"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error unpacking startConsole from classpath", e);
+        }
     }
 }

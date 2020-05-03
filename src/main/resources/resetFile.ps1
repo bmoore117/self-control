@@ -5,6 +5,8 @@ Param (
     [int] $processId
 )
 
+Write-Host "Received path is: $filePath"
+Write-Host "Received pid is: $processId"
 
 $childProcs = Get-WmiObject win32_process | where {$_.ParentProcessId -eq $processId}
 ForEach ($child in $childProcs) {
@@ -16,9 +18,10 @@ Stop-Process -Id $processId
 $fileContents = Get-Content $filePath -Raw
 
 # get file parent dir name
-$dir = Get-Item $filePath
-$dirName = $dir.Parent.FullName
-
+$fileObj = Get-Item $filePath
+Write-Host "Obtained dir: $dir"
+$dirName = $fileObj.Directory.FullName
+Write-Host "Parent dir name: $dirName"
 # delete dir and old file
 Remove-Item $dirName -Recurse
 

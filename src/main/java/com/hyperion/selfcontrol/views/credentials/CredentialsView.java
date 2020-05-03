@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.Random;
 
 @Route(value = "credentials", layout = MainView.class)
@@ -152,14 +151,11 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
             String password = generatePassword();
             int status = Utils.changePassword(password);
             if (status == 0) {
-                credentials.getDataProvider().fetch(new Query<>())
-                        .filter(credentials -> credentials.getTag().contains("local"))
-                        .findFirst()
-                        .ifPresent(item -> {
-                            item.setPassword(password);
-                            credentialService.setCredentials(item, item.getTag());
-                            passwordLabel.setText("Password changed successfully");
-                        });
+                credentialService.getLocalAdmin().ifPresent(creds -> {
+                    creds.setPassword(password);
+                    credentialService.setCredentials(creds, creds.getTag());
+                    passwordLabel.setText("Password changed successfully");
+                });
             } else {
                 passwordLabel.setText("Check logs for error");
             }
@@ -175,22 +171,34 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
         Label errorLabel = new Label();
-        Button generate;
+        Button generate = new Button();
+        generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         if (Utils.isLocalAdminActive()) {
-            generate = new Button("Close Local Admin Console");
-            generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-            generate.addClickListener(buttonClickEvent -> {
+            generate.setText("Close Local Admin Console");
+        } else {
+            generate.setText("Launch Local Admin Console");
+        }
+        generate.addClickListener(buttonClickEvent -> {
+            if (Utils.isLocalAdminActive()) {
                 Utils.removeShutdownHook();
                 Utils.resetFile();
+                String password = generatePassword();
+                int status = Utils.changePassword(password);
+                if (status == 0) {
+                    credentials.getDataProvider().fetch(new Query<>())
+                            .filter(credentials -> credentials.getTag().contains("local"))
+                            .findFirst()
+                            .ifPresent(item -> {
+                                item.setPassword(password);
+                                credentialService.setCredentials(item, item.getTag());
+                            });
+                }
                 credentialService.writeFile();
-            });
-        } else {
-            generate = new Button("Launch Local Admin Console");
-            generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            generate.addClickListener(buttonClickEvent -> {
+
+                generate.setText("Launch Local Admin Console");
+            } else {
                 try {
-                    credentialService.prepForLocalAdmin();
+                    credentialService.liftNetNannyCredentialsToRAM();
                 } catch (IOException e) {
                     log.error("Error prepping for local admin", e);
                     errorLabel.setText("Error prepping for local admin");
@@ -198,8 +206,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                 }
 
                 try {
+                    Utils.changePassword(CredentialService.STOCK_PASSWORD);
                     Utils.launchAdminConsole();
-                    credentialService.setDelayDirect(0);
                     Utils.addShutdownHook();
                 } catch (IOException | InterruptedException e) {
                     log.error("Error starting admin console", e);
@@ -207,8 +215,10 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                     credentialService.writeFile();
                     Utils.removeShutdownHook();
                 }
-            });
-        }
+
+                generate.setText("Close Local Admin Console");
+            }
+        });
 
         buttonLayout.add(generate);
         buttonLayout.add(errorLabel);
