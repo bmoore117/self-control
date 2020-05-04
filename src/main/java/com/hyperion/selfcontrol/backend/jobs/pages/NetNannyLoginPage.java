@@ -1,6 +1,7 @@
 package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.Credentials;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -37,8 +38,14 @@ public class NetNannyLoginPage {
         WebElement email = driver.findElement(By.id("email"));
         WebElement password = driver.findElement(By.id("password"));
 
-        email.sendKeys(credentialService.getNetNannyUsername());
-        password.sendKeys(credentialService.getNetNannyPassword());
+        Optional<Credentials> credOpt = credentialService.getNetNanny();
+        if (!credOpt.isPresent()) {
+            log.error("Missing net nanny credentials, check file");
+            return Optional.empty();
+        }
+        Credentials netNanny = credOpt.get();
+        email.sendKeys(netNanny.getUsername());
+        password.sendKeys(netNanny.getPassword());
         password.sendKeys(Keys.ENTER);
 
         boolean contains = driver.getPageSource().toLowerCase().contains("your screentime parenting ally");

@@ -1,5 +1,7 @@
 package com.hyperion.selfcontrol.backend;
 
+import java.util.Objects;
+
 public class Credentials {
 
     private String username;
@@ -7,11 +9,6 @@ public class Credentials {
     private String tag;
 
     public Credentials() {}
-
-    public Credentials(String password, String username) {
-        this.username = username;
-        this.password = password;
-    }
 
     public Credentials(String password, String username, String tag) {
         this.username = username;
@@ -41,5 +38,18 @@ public class Credentials {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Credentials that = (Credentials) o;
+        return Objects.equals(tag, that.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tag);
     }
 }

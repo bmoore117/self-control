@@ -13,7 +13,9 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
@@ -25,6 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Random;
 
@@ -81,9 +89,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
         // the grid valueChangeEvent will clear the form too
         saveCredentials.addClickListener(e -> {
-            Credentials credentials = new Credentials(password.getValue(), username.getValue());
+            Credentials credentials = new Credentials(password.getValue(), username.getValue(), tag.getValue());
             this.credentials.asSingleSelect().clear();
-            credentialService.setCredentials(credentials, tag.getValue());
+            credentialService.setCredentials(credentials);
             this.credentials.setItems(credentialService.getCredentials());
         });
         saveCredentials.setEnabled(credentialService.isEnabled());
@@ -111,10 +119,47 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         addFormItem(editorDiv, formLayout, password, "Password");
         addFormItem(editorDiv, formLayout, tag, "Tag");
         createButtonLayout(editorDiv);
+
+        // insert a break between form sections
+        Hr hr = new Hr();
+        editorDiv.add(hr);
+
         FormLayout delayLayout = new FormLayout();
         addFormItem(editorDiv, delayLayout, delay, "Delay (ms)");
         createDelayButtonLayout(editorDiv);
+
+        VerticalLayout commonValuesLayout = new VerticalLayout();
+        commonValuesLayout.setWidthFull();
+        commonValuesLayout.setPadding(false);
+        Pre pre = new Pre("Common delay values (ms)\n" +
+                "30 minutes:     1800000\n" +
+                "1 hour:         3600000\n" +
+                "2 hours:        7200000\n" +
+                "3 hours:        10800000\n" +
+                "5 hours:        18000000\n" +
+                "10 hours:       36000000");
+        pre.getStyle().set("margin-left", "auto");
+        commonValuesLayout.add(pre);
+        editorDiv.add(commonValuesLayout);
+
+        // insert a break between form sections
+        Hr hr2 = new Hr();
+        editorDiv.add(hr2);
         createPasswordGenerationLayout(editorDiv);
+
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
+        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+                .contains(now.getDayOfWeek());
+
+        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
+        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
+
+        if (!credentialService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
+            Hr hr3 = new Hr();
+            editorDiv.add(hr3);
+            createWeekendHallPassLayout(editorDiv);
+        }
+
         splitLayout.addToSecondary(editorDiv);
     }
 
@@ -143,8 +188,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.setClassName("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
+        buttonLayout.getStyle().set("padding-right", "0");
         Button generate = new Button("Change Admin Password");
-        generate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Label passwordLabel = new Label();
         generate.addClickListener(buttonClickEvent -> {
             String password = generatePassword();
@@ -155,7 +201,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                         .findFirst()
                         .ifPresent(item -> {
                             item.setPassword(password);
-                            credentialService.setCredentials(item, item.getTag());
+                            credentialService.setCredentials(item);
                             passwordLabel.setText("Password changed successfully");
                         });
             } else {
@@ -164,6 +210,36 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         });
         buttonLayout.add(generate);
         buttonLayout.add(passwordLabel);
+        editorDiv.add(buttonLayout);
+    }
+
+    private void createWeekendHallPassLayout(Div editorDiv) {
+        VerticalLayout buttonLayout = new VerticalLayout();
+        buttonLayout.setClassName("button-layout");
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        buttonLayout.getStyle().set("padding-right", "0");
+        Button generate = new Button("Activate Weekend Hall Pass");
+        generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Label statusLabel = new Label();
+        generate.addClickListener(buttonClickEvent -> {
+            int status = Utils.changePassword(CredentialService.STOCK_PASSWORD);
+            if (status == 0) {
+                credentials.getDataProvider().fetch(new Query<>())
+                        .filter(credentials -> credentials.getTag().contains("local"))
+                        .findFirst()
+                        .ifPresent(item -> {
+                            item.setPassword(CredentialService.STOCK_PASSWORD);
+                            credentialService.setCredentials(item);
+                            statusLabel.setText("Password changed successfully");
+                            credentialService.setHallPassUsed();
+                        });
+            } else {
+                statusLabel.setText("Check logs for error");
+            }
+        });
+        buttonLayout.add(generate);
+        buttonLayout.add(statusLabel);
         editorDiv.add(buttonLayout);
     }
 

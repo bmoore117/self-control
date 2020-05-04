@@ -4,12 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hyperion.selfcontrol.backend.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,36 +24,69 @@ public class CredentialService {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialService.class);
 
-    public static final String FILE_LOCATION = "C:\\Users\\ben-local\\credentials.json";
+    public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
+    public static final String STOCK_PASSWORD = "P@ssw0rd";
 
     private Config config;
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
     public CredentialService() throws IOException {
         mapper = new ObjectMapper();
-        config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        try {
+            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        } catch (FileNotFoundException e) {
+            FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
+            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+        }
+        log.info("Using " + FILE_LOCATION);
     }
 
-    public String getNetNannyUsername() {
-        return config.getCredentials().get("net-nanny").getUsername();
+    @Scheduled(cron = "0 0 0 * * MON")
+    public void resetHallPassForTheWeek() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
+        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+                .contains(now.getDayOfWeek());
+
+        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
+        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
+
+        if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
+            log.info("Resetting hall pass for the week");
+            config.setHallPassUsed(false);
+            writeFile();
+        }
     }
 
-    public String getNetNannyPassword() {
-        return config.getCredentials().get("net-nanny").getPassword();
+    public Optional<Credentials> getLocalAdmin() {
+        return config.getCredentials().stream()
+                .filter(entry -> entry.getTag().endsWith("local"))
+                .findFirst();
     }
 
-    public void setCredentials(Credentials credentials, String tag) {
-        config.getCredentials().put(tag, credentials);
+    public boolean isHallPassUsed() {
+        return config.isHallPassUsed();
+    }
+
+    public void setHallPassUsed() {
+        config.setHallPassUsed(true);
+        writeFile();
+    }
+
+    public Optional<Credentials> getNetNanny() {
+        return config.getCredentials().stream()
+                .filter(entry -> "net-nanny".equals(entry.getTag()))
+                .findFirst();
+    }
+
+    public void setCredentials(Credentials credentials) {
+        config.getCredentials().remove(credentials);
+        config.getCredentials().add(credentials);
         writeFile();
     }
 
     public List<Credentials> getCredentials() {
         if (isEnabled()) {
-            return config.getCredentials().entrySet().stream()
-                    .map(pair -> new Credentials(pair.getValue().getPassword(),
-                            pair.getValue().getUsername(),
-                            pair.getKey()))
-                    .collect(Collectors.toList());
+            return new ArrayList<>(config.getCredentials());
         } else {
             return Collections.emptyList();
         }

@@ -1,7 +1,9 @@
 package com.hyperion.selfcontrol;
 
+import com.hyperion.selfcontrol.backend.CredentialService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
@@ -16,9 +18,16 @@ import java.nio.file.StandardCopyOption;
 
 
 @Component
-public class FileUnpacker implements ApplicationRunner {
+public class StartupTaskRunner implements ApplicationRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(FileUnpacker.class);
+    private static final Logger log = LoggerFactory.getLogger(StartupTaskRunner.class);
+
+    private final CredentialService credentialService;
+
+    @Autowired
+    public StartupTaskRunner(CredentialService credentialService) {
+        this.credentialService = credentialService;
+    }
 
     @Override
     public void run(ApplicationArguments args) {
@@ -29,5 +38,7 @@ public class FileUnpacker implements ApplicationRunner {
         } catch (IOException e) {
             log.error("Error unpacking changePassword from classpath", e);
         }
+
+        credentialService.resetHallPassForTheWeek();
     }
 }
