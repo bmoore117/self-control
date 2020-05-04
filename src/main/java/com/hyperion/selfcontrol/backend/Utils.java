@@ -128,6 +128,7 @@ public class Utils {
         }
 
         pid = stringBuilder.toString();
+        log.info("Started console process " + pid);
         return pid;
     }
 
@@ -154,6 +155,7 @@ public class Utils {
         }
 
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        log.info("Added shutdown hook");
     }
 
     public static void resetFile() {

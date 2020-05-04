@@ -33,6 +33,7 @@ public class CredentialService {
             FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
             config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         }
+        log.info("Using " + FILE_LOCATION);
     }
 
     public String getNetNannyUsername() {
