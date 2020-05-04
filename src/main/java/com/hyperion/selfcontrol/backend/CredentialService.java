@@ -106,7 +106,7 @@ public class CredentialService {
             return null;
         };
 
-        runWithDelay("Write Delay Timer", writeDelay, delayInMillis);
+        runWithDelay("Write Delay Timer " + delayInMillis + "ms", writeDelay, delayInMillis);
     }
 
     public void writeFile() {
