@@ -147,18 +147,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         editorDiv.add(hr2);
         createPasswordGenerationLayout(editorDiv);
 
-        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-                .contains(now.getDayOfWeek());
-
-        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
-        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
-
-        if (!credentialService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
-            Hr hr3 = new Hr();
-            editorDiv.add(hr3);
-            createWeekendHallPassLayout(editorDiv);
-        }
+        Hr hr3 = new Hr();
+        editorDiv.add(hr3);
+        createWeekendHallPassLayout(editorDiv);
 
         splitLayout.addToSecondary(editorDiv);
     }
@@ -191,7 +182,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.getStyle().set("padding-right", "0");
         Button generate = new Button("Change Admin Password");
         generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        Label passwordLabel = new Label();
+        Label passwordLabel = new Label("Operation status will show here");
+        passwordLabel.getStyle().set("text-align", "right");
         generate.addClickListener(buttonClickEvent -> {
             String password = generatePassword();
             int status = Utils.changePassword(password);
@@ -221,7 +213,22 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.getStyle().set("padding-right", "0");
         Button generate = new Button("Activate Weekend Hall Pass");
         generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        Label statusLabel = new Label();
+
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
+        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+                .contains(now.getDayOfWeek());
+
+        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
+        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
+
+        if (!credentialService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
+            generate.setEnabled(true);
+        } else {
+            generate.setEnabled(false);
+        }
+
+        Label statusLabel = new Label("Operation status will show here");
+        statusLabel.getStyle().set("text-align", "right");
         generate.addClickListener(buttonClickEvent -> {
             int status = Utils.changePassword(CredentialService.STOCK_PASSWORD);
             if (status == 0) {
@@ -231,7 +238,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                         .ifPresent(item -> {
                             item.setPassword(CredentialService.STOCK_PASSWORD);
                             credentialService.setCredentials(item);
-                            statusLabel.setText("Password changed successfully");
+                            statusLabel.setText("Password changed to stock value of " + CredentialService.STOCK_PASSWORD);
                             credentialService.setHallPassUsed();
                         });
             } else {
