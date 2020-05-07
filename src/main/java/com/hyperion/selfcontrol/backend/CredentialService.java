@@ -1,6 +1,7 @@
 package com.hyperion.selfcontrol.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hyperion.selfcontrol.backend.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class CredentialService {
@@ -32,6 +32,7 @@ public class CredentialService {
 
     public CredentialService() throws IOException {
         mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         try {
             config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         } catch (FileNotFoundException e) {

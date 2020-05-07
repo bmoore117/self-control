@@ -102,4 +102,33 @@ public class Utils {
 
         return -1;
     }
+
+    public static void toggleInternet(boolean on) {
+        try {
+            ProcessBuilder builder = new ProcessBuilder();
+            builder.directory(new File("."));
+            if (on) {
+                builder.command("powershell.exe", "-File", "toggleInternet.ps1", "-enableInternet");
+            } else {
+                builder.command("powershell.exe", "-File", "toggleInternet.ps1");
+            }
+
+            Process p = builder.start();
+            p.waitFor();
+
+            try (InputStream stdOut = p.getInputStream(); InputStream stdErr = p.getErrorStream()) {
+                String line;
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stdOut));
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+                reader = new BufferedReader(new InputStreamReader(stdErr));
+                while ((line = reader.readLine()) != null) {
+                    log.error(line);
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error("Error running toggleInternet, with arg: " + on, e);
+        }
+    }
 }

@@ -3,8 +3,10 @@ package com.hyperion.selfcontrol.views.credentials;
 import com.hyperion.selfcontrol.backend.CredentialService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.Utils;
+import com.hyperion.selfcontrol.backend.config.Bedtimes;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -19,22 +21,26 @@ import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.Setter;
 import com.vaadin.flow.data.provider.Query;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Route(value = "credentials", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
@@ -45,19 +51,20 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
 
-    private CredentialService credentialService;
+    private final CredentialService credentialService;
 
-    private Grid<Credentials> credentials;
+    private final Grid<Credentials> credentials;
+    private final Binder<Credentials> binder;
 
-    private TextField username = new TextField();
-    private TextField password = new TextField();
-    private TextField tag = new TextField();
-    private Button saveCredentials = new Button("Save");
+    private final TextField username = new TextField();
+    private final TextField password = new TextField();
+    private final TextField tag = new TextField();
+    private final Button saveCredentials = new Button("Save");
 
-    private TextField delay = new TextField();
-    private Button saveDelay = new Button("Save");
+    private final TextField delay = new TextField();
+    private final Button saveDelay = new Button("Save");
 
-    private Binder<Credentials> binder;
+    private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
     public CredentialsView(CredentialService credentialService) {
@@ -66,7 +73,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         // Configure Grid
         credentials = new Grid<>();
         credentials.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-        credentials.setHeightFull();
+        credentials.setHeight("50%");
         credentials.addColumn(Credentials::getUsername).setHeader("Username");
         credentials.addColumn(credentials -> {
             int length = credentials.getPassword().length();
@@ -83,6 +90,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
         // Configure Form
         binder = new Binder<>(Credentials.class);
+        bedtimesBinder = new Binder<>(Bedtimes.class);
 
         // Bind fields. This where you'd define e.g. validation rules
         binder.bindInstanceFields(this);
@@ -254,8 +262,87 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         Div wrapper = new Div();
         wrapper.setId("wrapper");
         wrapper.setWidthFull();
-        splitLayout.addToPrimary(wrapper);
         wrapper.add(credentials);
+
+        Hr hr = new Hr();
+        wrapper.add(hr);
+
+        Tabs days = new Tabs();
+        Tab sunday = new Tab("Sunday");
+        Tab monday = new Tab("Monday");
+        Tab tuesday = new Tab("Tuesday");
+        Tab wednesday = new Tab("Wednesday");
+        Tab thursday = new Tab("Thursday");
+        Tab friday = new Tab("Friday");
+        Tab saturday = new Tab("Saturday");
+        List<Tab> tabs = Arrays.asList(sunday, monday, tuesday, wednesday, thursday, friday, saturday);
+
+        VerticalLayout tabActivePage = new VerticalLayout();
+        tabActivePage.setPadding(true);
+        Map<Tab, Component> tabsToPages = new HashMap<>();
+        for (int i = 0; i < tabs.size(); i++) {
+            Tab tab = tabs.get(i);
+            Div page = generateTabPage(tab.getLabel());
+            tabsToPages.put(tab, page);
+            if (i == 0) {
+                tabActivePage.add(page);
+            }
+        }
+        days.add(tabs.toArray(new Tab[0]));
+        days.setFlexGrowForEnclosedTabs(1);
+        days.addSelectedChangeListener(event -> {
+            Component selectedPage = tabsToPages.get(days.getSelectedTab());
+            selectedPage.setVisible(true);
+            tabActivePage.removeAll();
+            tabActivePage.add(selectedPage);
+        });
+
+        wrapper.add(days);
+        wrapper.add(tabActivePage);
+
+        VerticalLayout buttonLayout = new VerticalLayout();
+        buttonLayout.setPadding(true);
+        Button saveButton = new Button("Save");
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addClickListener(event -> {
+            Bedtimes bedtimes = bedtimesBinder.getBean();
+            credentialService.getConfig().setBedtimes(bedtimes);
+            credentialService.writeFile();
+        });
+        buttonLayout.add(saveButton);
+        wrapper.add(buttonLayout);
+
+        splitLayout.addToPrimary(wrapper);
+    }
+
+    private Div generateTabPage(String dayLabel) {
+        Div page = new Div();
+        FormLayout layoutWithFormItems = new FormLayout();
+        TimePicker timePicker = new TimePicker();
+        bedtimesBinder.forField(timePicker).bind(getBedtimeValueProvider(dayLabel), setBedtimeValueProvider(dayLabel));
+        layoutWithFormItems.addFormItem(timePicker, "Choose internet shutoff time for " + dayLabel + ":");
+        page.add(layoutWithFormItems);
+        return page;
+    }
+
+    private ValueProvider<Bedtimes, LocalTime> getBedtimeValueProvider(String dayLabel) {
+        return bedtimes -> {
+            try {
+                Method getter = Bedtimes.class.getDeclaredMethod("get" + dayLabel);
+                return (LocalTime) getter.invoke(bedtimes);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+                return null;
+            }
+        };
+    }
+
+    private Setter<Bedtimes, LocalTime> setBedtimeValueProvider(String dayLabel) {
+        return (bedtimes, time) -> {
+            try {
+                Method getter = Bedtimes.class.getDeclaredMethod("set" + dayLabel, LocalTime.class);
+                getter.invoke(bedtimes, time);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
+        };
     }
 
     private void addFormItem(Div wrapper, FormLayout formLayout,
@@ -285,6 +372,12 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         if (credentialService.isEnabled()) {
             credentials.setItems(credentialService.getCredentials());
         }
+
+        Bedtimes bedtimes = credentialService.getConfig().getBedtimes();
+        if (bedtimes == null) {
+            bedtimes = new Bedtimes();
+        }
+        bedtimesBinder.setBean(bedtimes);
     }
 
     private void populateForm(Credentials value) {

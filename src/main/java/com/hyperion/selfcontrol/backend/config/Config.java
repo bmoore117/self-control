@@ -2,7 +2,6 @@ package com.hyperion.selfcontrol.backend.config;
 
 import com.hyperion.selfcontrol.backend.Credentials;
 
-import java.util.List;
 import java.util.Set;
 
 public class Config {
@@ -11,6 +10,7 @@ public class Config {
     private Set<Credentials> credentials;
     private State state;
     private Boolean hallPassUsed;
+    private Bedtimes bedtimes;
 
     public Boolean isHallPassUsed() {
         if (hallPassUsed == null) {
@@ -49,5 +49,13 @@ public class Config {
 
     public void setState(State state) {
         this.state = state;
+    }
+
+    public Bedtimes getBedtimes() {
+        return bedtimes;
+    }
+
+    public void setBedtimes(Bedtimes bedtimes) {
+        this.bedtimes = bedtimes;
     }
 }

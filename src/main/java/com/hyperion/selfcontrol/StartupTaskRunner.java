@@ -39,6 +39,14 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking changePassword from classpath", e);
         }
 
+        log.info("Unpacking internet script");
+        resource = new ClassPathResource("toggleInternet.ps1");
+        try (InputStream inputStream = resource.getInputStream()) {
+            Files.copy(inputStream, Paths.get("toggleInternet.ps1"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error unpacking toggleInternet from classpath", e);
+        }
+
         credentialService.resetHallPassForTheWeek();
     }
 }
