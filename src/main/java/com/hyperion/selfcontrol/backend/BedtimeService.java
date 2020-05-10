@@ -54,6 +54,11 @@ public class BedtimeService {
             cutoffTime = bedtimes.getSaturday();
         }
 
+        if (cutoffTime == null) {
+            log.info("Cutoff time for {} null, aborting with no effect", dow);
+            return;
+        }
+
         ScheduledFuture<?> cutoffTask = scheduledCutoffTimes.get(dow);
         if (cutoffTask != null && !cutoffTask.isCancelled()) {
             cutoffTask.cancel(true);
