@@ -5,18 +5,19 @@
 $adapters = Get-NetAdapter
 $internetAdapters = $adapters | Where-Object {$_.Name -notin "vEthernet (Default Switch)", "Bluetooth Network Connection"}
 Foreach ($adapter in $internetAdapters) {
+    $name = $adapter.Name
     if ($enableInternet) {
         if ($adapter.Status -ne "Disabled") {
-            Write-Host "Enabling $adapter.Name"
+            Write-Host "Enabling $name"
             Enable-NetAdapter -Name $adapter.Name -Confirm:$false
         } else {
-            Write-Host "$adapter.Name already enabled"
+            Write-Host "$name already enabled"
         }
     } else {
         if ($adapter.Status -eq "Disabled") {
-            Write-Host "$adapter.Name already disabled"
+            Write-Host "$name already disabled"
         } else {
-            Write-Host "Disabling $adapter.Name"
+            Write-Host "Disabling $name"
             Disable-NetAdapter -Name $adapter.Name -Confirm:$false
         }
     }
