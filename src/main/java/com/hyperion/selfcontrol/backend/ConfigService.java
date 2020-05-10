@@ -34,7 +34,6 @@ public class ConfigService {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         refreshFile();
-        log.info("Using " + FILE_LOCATION);
     }
 
     public void refreshFile() throws IOException {
@@ -44,6 +43,7 @@ public class ConfigService {
             FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
             config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         }
+        log.info("Loaded file from " + FILE_LOCATION);
     }
 
     /*
