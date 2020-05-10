@@ -7,7 +7,7 @@ $internetAdapters = $adapters | Where-Object {$_.Name -notin "vEthernet (Default
 Foreach ($adapter in $internetAdapters) {
     $name = $adapter.Name
     if ($enableInternet) {
-        if ($adapter.Status -ne "Disabled") {
+        if ($adapter.Status -eq "Disabled") {
             Write-Host "Enabling $name"
             Enable-NetAdapter -Name $adapter.Name -Confirm:$false
         } else {
