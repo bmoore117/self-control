@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.views.credentials;
 
+import com.hyperion.selfcontrol.backend.BedtimeService;
 import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.Utils;
@@ -52,6 +53,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
 
     private final ConfigService configService;
+    private final BedtimeService bedtimeService;
 
     private final Grid<Credentials> credentials;
     private final Binder<Credentials> binder;
@@ -67,8 +69,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
-    public CredentialsView(ConfigService configService) {
+    public CredentialsView(ConfigService configService, BedtimeService bedtimeService) {
         this.configService = configService;
+        this.bedtimeService = bedtimeService;
         setId("master-detail-view");
         // Configure Grid
         credentials = new Grid<>();
@@ -308,6 +311,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
             Bedtimes bedtimes = bedtimesBinder.getBean();
             configService.getConfig().setBedtimes(bedtimes);
             configService.writeFile();
+            bedtimeService.scheduleToday(bedtimes);
         });
         buttonLayout.add(saveButton);
         wrapper.add(buttonLayout);

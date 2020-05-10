@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol;
 
+import com.hyperion.selfcontrol.backend.BedtimeService;
 import com.hyperion.selfcontrol.backend.ConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +24,12 @@ public class StartupTaskRunner implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(StartupTaskRunner.class);
 
     private final ConfigService configService;
+    private final BedtimeService bedtimeService;
 
     @Autowired
-    public StartupTaskRunner(ConfigService configService) {
+    public StartupTaskRunner(ConfigService configService, BedtimeService bedtimeService) {
         this.configService = configService;
+        this.bedtimeService = bedtimeService;
     }
 
     @Override
@@ -48,5 +51,6 @@ public class StartupTaskRunner implements ApplicationRunner {
         }
 
         configService.resetHallPassForTheWeek();
+        bedtimeService.scheduleToday(configService.getConfig().getBedtimes());
     }
 }
