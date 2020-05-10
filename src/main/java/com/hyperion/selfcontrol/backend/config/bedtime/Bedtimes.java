@@ -1,4 +1,4 @@
-package com.hyperion.selfcontrol.backend.config;
+package com.hyperion.selfcontrol.backend.config.bedtime;
 
 import java.time.LocalTime;
 

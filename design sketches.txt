@@ -1,0 +1,18 @@
+on write of file
+schedule nearest job based on just-saved config
+after that job runs, as a last task, find next nearest job and schedule
+
+on startup find nearest job and schedule
+
+we can also experiment with including an end time field, such that we could have interspersed breaks throughout the day and not just at night - this could allow for i.e. workout times.
+
+move to start and end times, and change Bedtimes to be a List of weekdays, where each weekday has a value 0 - 6 for sorting,
+and then within each weekday there is a list of non-overlapping start and end pairs, sortable as well. Thus finding the next nearest job
+is a matter of a sublist starting from the current day, inclusive, and then taking the head of a 2-column sorted list.
+
+See if you could even add validators for that on the UI.
+
+Then also think about upgrading the hall pass system to have an "end hall pass" mode, where the button changes text
+and changes password, resets delay (probably to 30 minutes or so) on click.
+
+Lastly of course CRUD on custom filters

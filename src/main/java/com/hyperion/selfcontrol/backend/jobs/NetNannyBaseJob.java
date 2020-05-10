@@ -1,6 +1,6 @@
 package com.hyperion.selfcontrol.backend.jobs;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyDashboard;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyLoginPage;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
@@ -14,14 +14,14 @@ public class NetNannyBaseJob {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyBaseJob.class);
 
-    public static Optional<NetNannyProfile> navigateToProfile(WebDriver driver, CredentialService credentialService) {
+    public static Optional<NetNannyProfile> navigateToProfile(WebDriver driver, ConfigService configService) {
         driver.manage().deleteAllCookies();
         driver.get("chrome://settings/clearBrowserData");
         WebElement settings = driver.findElement(By.xpath("//settings-ui"));
         settings.sendKeys(Keys.ENTER);
 
         log.info("Driver constructed");
-        NetNannyLoginPage loginPage = new NetNannyLoginPage(driver, credentialService);
+        NetNannyLoginPage loginPage = new NetNannyLoginPage(driver, configService);
 
         if (!loginPage.navigateToLoginPage()) {
             log.error("Login page not present");

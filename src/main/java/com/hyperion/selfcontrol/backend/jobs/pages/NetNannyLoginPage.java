@@ -1,6 +1,6 @@
 package com.hyperion.selfcontrol.backend.jobs.pages;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -18,11 +18,11 @@ public class NetNannyLoginPage {
     private static final Logger log = LoggerFactory.getLogger(NetNannyLoginPage.class);
 
     private WebDriver driver;
-    private CredentialService credentialService;
+    private ConfigService configService;
 
-    public NetNannyLoginPage(WebDriver webDriver, CredentialService credentialService) {
+    public NetNannyLoginPage(WebDriver webDriver, ConfigService configService) {
         this.driver = webDriver;
-        this.credentialService = credentialService;
+        this.configService = configService;
     }
 
     public boolean navigateToLoginPage() {
@@ -38,7 +38,7 @@ public class NetNannyLoginPage {
         WebElement email = driver.findElement(By.id("email"));
         WebElement password = driver.findElement(By.id("password"));
 
-        Optional<Credentials> credOpt = credentialService.getNetNanny();
+        Optional<Credentials> credOpt = configService.getNetNanny();
         if (!credOpt.isPresent()) {
             log.error("Missing net nanny credentials, check file");
             return Optional.empty();

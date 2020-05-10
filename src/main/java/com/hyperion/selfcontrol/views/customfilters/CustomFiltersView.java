@@ -1,6 +1,6 @@
 package com.hyperion.selfcontrol.views.customfilters;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
@@ -52,7 +52,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFiltersView.class);
 
-    private CredentialService credentialService;
+    private ConfigService configService;
 
     private Grid<CustomFilterCategory> statuses;
 
@@ -65,8 +65,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     private Binder<CustomFilterCategory> binder;
 
     @Autowired
-    public CustomFiltersView(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public CustomFiltersView(ConfigService configService) {
+        this.configService = configService;
         setId("master-detail-view");
         // Configure Grid
         statuses = new Grid<>();
@@ -93,8 +93,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CUSTOM_CONTENT_FILTERS,
+            Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CUSTOM_CONTENT_FILTERS,
                             Collections.singletonList(new CustomFilterCategory(category.getName(), "block"))))
                     .map(NetNannyStatusJob::getNetNannyCustomStatuses);
             Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
@@ -105,11 +105,11 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CUSTOM_CONTENT_FILTERS,
+            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CUSTOM_CONTENT_FILTERS,
                             Collections.singletonList(new CustomFilterCategory(category.getName(), "inactive"))));
             Runnable composedFunction = Utils.composeWithDriver(function);
-            credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
+            configService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
 
         SplitLayout splitLayout = new SplitLayout();
@@ -181,7 +181,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     }
 
     public void doAfterNavigation(WebDriver driver) {
-        Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+        Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, configService)
                 .map(NetNannyStatusJob::getNetNannyCustomStatuses);
         filterCategories.ifPresent(categories -> statuses.setItems(categories));
     }

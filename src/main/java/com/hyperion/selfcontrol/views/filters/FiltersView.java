@@ -1,7 +1,7 @@
 package com.hyperion.selfcontrol.views.filters;
 
 import com.hyperion.selfcontrol.Pair;
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
@@ -54,7 +54,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(FiltersView.class);
 
-    private CredentialService credentialService;
+    private ConfigService configService;
 
     private Grid<FilterCategory> statuses;
 
@@ -68,8 +68,8 @@ public class FiltersView extends Div implements AfterNavigationObserver {
     private Binder<FilterCategory> binder;
 
     @Autowired
-    public FiltersView(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public FiltersView(ConfigService configService) {
+        this.configService = configService;
         setId("master-detail-view");
         // Configure Grid
         statuses = new Grid<>();
@@ -96,19 +96,19 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             FilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CONTENT_FILTERS,
+            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CONTENT_FILTERS,
                             Collections.singletonList(new FilterCategory(category.getName(), "allow"))));
             Runnable composedFunction = Utils.composeWithDriver(function);
-            credentialService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
+            configService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
 
         setBlocked.addClickListener(e -> {
             FilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
 
-            Function<WebDriver, Optional<List<FilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, credentialService, CONTENT_FILTERS,
+            Function<WebDriver, Optional<List<FilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CONTENT_FILTERS,
                             Collections.singletonList(new FilterCategory(category.getName(), "block"))))
                     .map(NetNannyStatusJob::getNetNannyStatuses);
             Supplier<Optional<List<FilterCategory>>> composedFunction = Utils.composeWithDriver(function);
@@ -120,14 +120,14 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             // value here is new value, not old value - it is the value after clicking
             if (!checkbox.getValue()) {
                 // disable on delay
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .ifPresent(profile -> profile.setForceSafeSearch(false, credentialService));
+                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                        .ifPresent(profile -> profile.setForceSafeSearch(false, configService));
                 Runnable withDriver = Utils.composeWithDriver(function);
-                credentialService.runWithDelay("Disable Force SafeSearch", withDriver);
+                configService.runWithDelay("Disable Force SafeSearch", withDriver);
             } else {
                 // if safe search not currently enabled, run immediately and enable
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
-                        .ifPresent(profile -> profile.setForceSafeSearch(true, credentialService));
+                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
+                        .ifPresent(profile -> profile.setForceSafeSearch(true, configService));
                 Runnable withDriver = Utils.composeWithDriver(function);
                 withDriver.run();
             }
@@ -204,7 +204,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
 
     public void doAfterNavigation(WebDriver driver) {
         // insert here
-        Optional<Pair<Boolean, List<FilterCategory>>> resultsOpt = NetNannyBaseJob.navigateToProfile(driver, credentialService)
+        Optional<Pair<Boolean, List<FilterCategory>>> resultsOpt = NetNannyBaseJob.navigateToProfile(driver, configService)
                 .map(profile -> new Pair<>(profile.isForceSafeSearch(), NetNannyStatusJob.getNetNannyStatuses(profile)));
         resultsOpt.ifPresent(results -> {
             checkbox.setValue(results.getFirst());

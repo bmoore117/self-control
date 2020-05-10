@@ -1,7 +1,7 @@
 package com.hyperion.selfcontrol.backend.jobs.pages;
 
 import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.FilterCategory;
 import com.hyperion.selfcontrol.backend.config.ContentFilter;
@@ -42,7 +42,7 @@ public class NetNannyFiltersPage {
         return new NetNannyProfile(driver);
     }
 
-    public void findAndDo(CredentialService credentialService, List<AbstractFilterCategory> filterCategories, boolean writeFile) {
+    public void findAndDo(ConfigService configService, List<AbstractFilterCategory> filterCategories, boolean writeFile) {
         for (AbstractFilterCategory filterCategory : filterCategories) {
             Optional<WebElement> row;
             boolean isCustomContentFilter;
@@ -71,11 +71,11 @@ public class NetNannyFiltersPage {
 
                 if (writeFile) {
                     if (isCustomContentFilter) {
-                        updateContentFilters(credentialService.getConfig().getState().getCustomContentFilters(), filterCategory.getName(), filterCategory.getStatus());
+                        updateContentFilters(configService.getConfig().getState().getCustomContentFilters(), filterCategory.getName(), filterCategory.getStatus());
                     } else {
-                        updateContentFilters(credentialService.getConfig().getState().getContentFilters(), filterCategory.getName(), filterCategory.getStatus());
+                        updateContentFilters(configService.getConfig().getState().getContentFilters(), filterCategory.getName(), filterCategory.getStatus());
                     }
-                    credentialService.writeFile();
+                    configService.writeFile();
                 }
             } else {
                 log.warn("Expected row not present: " + filterCategory.getName());

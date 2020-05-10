@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.Function;
 
 @Service
-public class CredentialService {
+public class ConfigService {
 
-    private static final Logger log = LoggerFactory.getLogger(CredentialService.class);
+    private static final Logger log = LoggerFactory.getLogger(ConfigService.class);
 
     public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
     public static final String STOCK_PASSWORD = "P@ssw0rd";
@@ -30,18 +30,32 @@ public class CredentialService {
     private Config config;
     private final ObjectMapper mapper;
 
-    public CredentialService() throws IOException {
+    public ConfigService() throws IOException {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+        refreshFile();
+        log.info("Using " + FILE_LOCATION);
+    }
+
+    public void refreshFile() throws IOException {
         try {
             config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         } catch (FileNotFoundException e) {
             FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
             config = mapper.readValue(new File(FILE_LOCATION), Config.class);
         }
-        log.info("Using " + FILE_LOCATION);
     }
 
+    /*
+     * "0 0 * * * *" = the top of every hour of every day.
+     * "10 * * * * *" = every ten seconds.
+     * "0 0 8-10 * * *" = 8, 9 and 10 o'clock of every day.
+     * "0 0 8,10 * * *" = 8 and 10 o'clock of every day.
+     * "0 0/30 8-10 * * *" = 8:00, 8:30, 9:00, 9:30 and 10 o'clock every day.
+     * "0 0 9-17 * * MON-FRI" = on the hour nine-to-five weekdays
+     * "0 0 0 25 12 ?" = every Christmas Day at midnight
+     * second, minute, hour, day of month, month, day(s) of week
+     */
     @Scheduled(cron = "0 0 0 * * MON")
     public void resetHallPassForTheWeek() {
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());

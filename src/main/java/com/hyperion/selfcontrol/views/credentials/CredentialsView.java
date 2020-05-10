@@ -1,9 +1,9 @@
 package com.hyperion.selfcontrol.views.credentials;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.Utils;
-import com.hyperion.selfcontrol.backend.config.Bedtimes;
+import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
@@ -51,7 +51,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
 
-    private final CredentialService credentialService;
+    private final ConfigService configService;
 
     private final Grid<Credentials> credentials;
     private final Binder<Credentials> binder;
@@ -67,8 +67,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
-    public CredentialsView(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public CredentialsView(ConfigService configService) {
+        this.configService = configService;
         setId("master-detail-view");
         // Configure Grid
         credentials = new Grid<>();
@@ -99,16 +99,16 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveCredentials.addClickListener(e -> {
             Credentials credentials = new Credentials(password.getValue(), username.getValue(), tag.getValue());
             this.credentials.asSingleSelect().clear();
-            credentialService.setCredentials(credentials);
-            this.credentials.setItems(credentialService.getCredentials());
+            configService.setCredentials(credentials);
+            this.credentials.setItems(configService.getCredentials());
         });
-        saveCredentials.setEnabled(credentialService.isEnabled());
+        saveCredentials.setEnabled(configService.isEnabled());
 
         saveDelay.addClickListener(e -> {
             long delayMs = Long.parseLong(delay.getValue());
-            credentialService.setDelay(delayMs);
+            configService.setDelay(delayMs);
         });
-        delay.setValue("" + credentialService.getDelay());
+        delay.setValue("" + configService.getDelay());
 
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
@@ -201,7 +201,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                         .findFirst()
                         .ifPresent(item -> {
                             item.setPassword(password);
-                            credentialService.setCredentials(item);
+                            configService.setCredentials(item);
                             passwordLabel.setText("Password changed successfully");
                         });
             } else {
@@ -229,7 +229,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
         boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
 
-        if (!credentialService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
+        if (!configService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
             generate.setEnabled(true);
         } else {
             generate.setEnabled(false);
@@ -238,16 +238,16 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         Label statusLabel = new Label("Operation status will show here");
         statusLabel.getStyle().set("text-align", "right");
         generate.addClickListener(buttonClickEvent -> {
-            int status = Utils.changePassword(CredentialService.STOCK_PASSWORD);
+            int status = Utils.changePassword(ConfigService.STOCK_PASSWORD);
             if (status == 0) {
                 credentials.getDataProvider().fetch(new Query<>())
                         .filter(credentials -> credentials.getTag().contains("local"))
                         .findFirst()
                         .ifPresent(item -> {
-                            item.setPassword(CredentialService.STOCK_PASSWORD);
-                            credentialService.setCredentials(item);
-                            statusLabel.setText("Password changed to stock value of " + CredentialService.STOCK_PASSWORD);
-                            credentialService.setHallPassUsed();
+                            item.setPassword(ConfigService.STOCK_PASSWORD);
+                            configService.setCredentials(item);
+                            statusLabel.setText("Password changed to stock value of " + ConfigService.STOCK_PASSWORD);
+                            configService.setHallPassUsed();
                         });
             } else {
                 statusLabel.setText("Check logs for error");
@@ -306,8 +306,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> {
             Bedtimes bedtimes = bedtimesBinder.getBean();
-            credentialService.getConfig().setBedtimes(bedtimes);
-            credentialService.writeFile();
+            configService.getConfig().setBedtimes(bedtimes);
+            configService.writeFile();
         });
         buttonLayout.add(saveButton);
         wrapper.add(buttonLayout);
@@ -369,11 +369,11 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-        if (credentialService.isEnabled()) {
-            credentials.setItems(credentialService.getCredentials());
+        if (configService.isEnabled()) {
+            credentials.setItems(configService.getCredentials());
         }
 
-        Bedtimes bedtimes = credentialService.getConfig().getBedtimes();
+        Bedtimes bedtimes = configService.getConfig().getBedtimes();
         if (bedtimes == null) {
             bedtimes = new Bedtimes();
         }

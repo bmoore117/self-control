@@ -1,6 +1,7 @@
 package com.hyperion.selfcontrol.backend.config;
 
 import com.hyperion.selfcontrol.backend.Credentials;
+import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 
 import java.util.Set;
 

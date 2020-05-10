@@ -1,6 +1,6 @@
 package com.hyperion.selfcontrol.controller;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ public class PingController {
     public static final Logger log = LoggerFactory.getLogger(PingController.class);
 
     @Autowired
-    private CredentialService credentialService;
+    private ConfigService configService;
 
     /**
      * Idea here was on ping to check state in config, and reset it if changed. Deprecated in favor of credential locking.

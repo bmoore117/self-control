@@ -1,6 +1,6 @@
 package com.hyperion.selfcontrol;
 
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +22,11 @@ public class StartupTaskRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StartupTaskRunner.class);
 
-    private final CredentialService credentialService;
+    private final ConfigService configService;
 
     @Autowired
-    public StartupTaskRunner(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public StartupTaskRunner(ConfigService configService) {
+        this.configService = configService;
     }
 
     @Override
@@ -47,6 +47,6 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking toggleInternet from classpath", e);
         }
 
-        credentialService.resetHallPassForTheWeek();
+        configService.resetHallPassForTheWeek();
     }
 }

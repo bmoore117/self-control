@@ -1,7 +1,7 @@
 package com.hyperion.selfcontrol.views.blockadd;
 
 import com.hyperion.selfcontrol.Pair;
-import com.hyperion.selfcontrol.backend.CredentialService;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.Website;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
@@ -45,7 +45,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(BlockAddView.class);
 
-    private CredentialService credentialService;
+    private ConfigService configService;
 
     private TextField newAllowed;
     private Grid<Website> allowed;
@@ -54,8 +54,8 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
     private Grid<Website> blocked;
 
     @Autowired
-    public BlockAddView(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public BlockAddView(ConfigService configService) {
+        this.configService = configService;
         setId("master-detail-view");
         setSizeFull();
 
@@ -66,10 +66,10 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         Button addAllowed = new Button("Allow");
         addAllowed.addClickListener(event -> {
             String value = newAllowed.getValue();
-            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
                     .map(profile -> NetNannyBlockAddJob.addItem(profile, value, true));
             Runnable runnable = Utils.composeWithDriver(function);
-            credentialService.runWithDelay("Allow website: " + value, runnable);
+            configService.runWithDelay("Allow website: " + value, runnable);
             newAllowed.clear();
         });
         addAllowed.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -79,7 +79,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         allowed.addColumn(new ComponentRenderer<>(item -> {
             Button remove = new Button("Remove");
             remove.addClickListener(buttonClickEvent -> {
-                Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
                         .map(profile -> NetNannyBlockAddJob.removeItem(profile, item.getName(), true)).orElse(false);
                 Supplier<Boolean> supplier = Utils.composeWithDriver(function);
                 if (supplier.get()) {
@@ -104,7 +104,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         Button addBlocked = new Button("Block");
         addBlocked.addClickListener(event -> {
             String value = newBlocked.getValue();
-            Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+            Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
                     .map(profile -> NetNannyBlockAddJob.addItem(profile, value, false)).orElse(false);
             Supplier<Boolean> supplier = Utils.composeWithDriver(function);
             if (supplier.get()) {
@@ -122,10 +122,10 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         blocked.addColumn(new ComponentRenderer<>(item -> {
             Button remove = new Button("Remove");
             remove.addClickListener(buttonClickEvent -> {
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
                         .flatMap(NetNannyProfile::clickBlockAdd).ifPresent(netNannyBlockAddPage -> netNannyBlockAddPage.removeItem(item.getName(), false));
                 Runnable withDriver = Utils.composeWithDriver(function);
-                credentialService.runWithDelay("Remove blocked site: " + item.getName(), withDriver);
+                configService.runWithDelay("Remove blocked site: " + item.getName(), withDriver);
                 remove.setEnabled(false);
             });
             return remove;
@@ -140,7 +140,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        Function<WebDriver, Pair<List<Website>, List<Website>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, credentialService)
+        Function<WebDriver, Pair<List<Website>, List<Website>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
                 .map(NetNannyBlockAddJob::getBlockAddLists).orElse(new Pair<>(Collections.emptyList(), Collections.emptyList()));
         Supplier<Pair<List<Website>, List<Website>>> supplier = Utils.composeWithDriver(function);
         Pair<List<Website>, List<Website>> results = supplier.get();
