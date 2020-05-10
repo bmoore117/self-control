@@ -309,9 +309,11 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> {
             Bedtimes bedtimes = bedtimesBinder.getBean();
-            configService.getConfig().setBedtimes(bedtimes);
-            configService.writeFile();
-            bedtimeService.scheduleToday(bedtimes);
+            configService.runWithDelay("Update bedtimes action", () -> {
+                configService.getConfig().setBedtimes(bedtimes);
+                configService.writeFile();
+                bedtimeService.scheduleToday(bedtimes);
+            });
         });
         buttonLayout.add(saveButton);
         wrapper.add(buttonLayout);
