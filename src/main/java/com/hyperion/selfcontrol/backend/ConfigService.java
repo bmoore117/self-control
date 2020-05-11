@@ -58,6 +58,7 @@ public class ConfigService {
      */
     @Scheduled(cron = "0 0 0 * * MON")
     public void resetHallPassForTheWeek() {
+        log.info("Entering resetHallPassForTheWeek");
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
                 .contains(now.getDayOfWeek());
@@ -65,6 +66,9 @@ public class ConfigService {
         LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
         boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
 
+        log.info("Hall pass used: {}", config.isHallPassUsed());
+        log.info("isWeekend: {}", isWeekend);
+        log.info("afterFiveOnFriday: {}", afterFiveOnFriday);
         if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
             log.info("Resetting hall pass for the week");
             config.setHallPassUsed(false);
