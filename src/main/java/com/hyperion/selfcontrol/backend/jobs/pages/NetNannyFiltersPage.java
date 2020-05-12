@@ -151,30 +151,70 @@ public class NetNannyFiltersPage {
     public List<CustomFilterCategory> getCustomStatuses() {
         WebDriverWait wait = new WebDriverWait(driver, 10);
         List<WebElement> elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.filters-list")));
+        List<String> filterNames = elements.stream().map(e -> {
+            if (!e.isDisplayed()) {
+                scrollIntoView(e, driver);
+            }
+            WebElement listLink = e.findElement(By.cssSelector("div.filter-name.one-liner"));
+            return listLink.getText();
+        }).collect(Collectors.toList());
 
-        List<CustomFilterCategory> collect = elements.stream()
-                .map(e -> {
-                    if (!e.isDisplayed()) {
-                        scrollIntoView(e, driver);
-                    }
-                    String[] textParts = e.getText().split("\\W+");
-                    StringBuilder category = new StringBuilder();
-                    int length = textParts.length - 3;
-                    for (int i = 0; i < length; i++) {
-                        category.append(textParts[i]).append(" ");
-                    }
+        List<CustomFilterCategory> results = new ArrayList<>();
+        for (String filterName : filterNames) {
+            wait = new WebDriverWait(driver, 10);
+            List<WebElement> filters = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.filters-list")));
+            WebElement targetFilter = null;
+            for (WebElement filter : filters) {
+                if (!filter.isDisplayed()) {
+                    scrollIntoView(filter, driver);
+                }
+                if (filter.getText().contains(filterName)) {
+                    targetFilter = filter;
+                    break;
+                }
+            }
 
-                    WebElement activeButton = e.findElement(By.cssSelector("button.active"));
-                    String status = activeButton.getText();
-                    CustomFilterCategory f = new CustomFilterCategory(category.toString().trim(), status);
-                    log.info(f.toString());
-                    return f;
-                }).collect(Collectors.toList());
+            if (targetFilter != null) {
+                results.add(processElement(targetFilter));
+            } else {
+                log.error("Could not find element for {}", filterName);
+            }
+        }
 
-        if (collect.isEmpty()) {
+        if (results.isEmpty()) {
             log.error("No custom filters found in modal, returning empty list");
         }
 
-        return collect;
+        return results;
+    }
+
+    private CustomFilterCategory processElement(WebElement e) {
+        String[] textParts = e.getText().split("\\W+");
+        StringBuilder category = new StringBuilder();
+        int length = textParts.length - 3;
+        for (int i = 0; i < length; i++) {
+            category.append(textParts[i]).append(" ");
+        }
+
+        WebElement activeButton = e.findElement(By.cssSelector("button.active"));
+        String status = activeButton.getText();
+
+        WebElement listLink = e.findElement(By.cssSelector("div.filter-name.one-liner"));
+        listLink.click();
+
+        List<WebElement> keywords = driver.findElements(By.cssSelector("li.keyword"));
+        List<String> collectedKeywords = keywords.stream().map(li -> {
+            if (!li.isDisplayed()) {
+                scrollIntoView(li, driver);
+            }
+            return li.getText();
+        }).collect(Collectors.toList());
+
+        WebElement backDiv = driver.findElement(By.cssSelector("div.back"));
+        backDiv.click();
+
+        CustomFilterCategory f = new CustomFilterCategory(category.toString().trim(), status, collectedKeywords);
+        log.info(f.toString());
+        return f;
     }
 }

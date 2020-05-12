@@ -1,8 +1,17 @@
 package com.hyperion.selfcontrol.backend;
 
+import java.util.List;
+
 public class CustomFilterCategory extends AbstractFilterCategory {
 
+    public List<String> keywords;
+
     public CustomFilterCategory(String name, String status) {
+        this(name, status, null);
+    }
+
+    public CustomFilterCategory(String name, String status, List<String> keywords) {
+        this.keywords = keywords;
         this.name = name;
         this.status = status;
         if ("inactive".equals(status.toLowerCase())) {
@@ -17,7 +26,8 @@ public class CustomFilterCategory extends AbstractFilterCategory {
     @Override
     public String toString() {
         return "CustomFilterCategory{" +
-                "name='" + name + '\'' +
+                "keywords=" + keywords +
+                ", name='" + name + '\'' +
                 ", status='" + status + '\'' +
                 ", theme='" + theme + '\'' +
                 '}';
