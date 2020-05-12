@@ -4,13 +4,13 @@ import java.util.List;
 
 public class CustomFilterCategory extends AbstractFilterCategory {
 
-    public List<String> keywords;
+    public List<Keyword> keywords;
 
     public CustomFilterCategory(String name, String status) {
         this(name, status, null);
     }
 
-    public CustomFilterCategory(String name, String status, List<String> keywords) {
+    public CustomFilterCategory(String name, String status, List<Keyword> keywords) {
         this.keywords = keywords;
         this.name = name;
         this.status = status;
@@ -31,5 +31,9 @@ public class CustomFilterCategory extends AbstractFilterCategory {
                 ", status='" + status + '\'' +
                 ", theme='" + theme + '\'' +
                 '}';
+    }
+
+    public List<Keyword> getKeywords() {
+        return keywords;
     }
 }

@@ -2,6 +2,7 @@ package com.hyperion.selfcontrol.views.customfilters;
 
 import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.CustomFilterCategory;
+import com.hyperion.selfcontrol.backend.Keyword;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannySetCategoryJob;
@@ -16,11 +17,13 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -41,6 +44,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
 
@@ -56,6 +60,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private Grid<CustomFilterCategory> statuses;
 
+    private Grid<Keyword> activeFilterKeywords;
+
     private TextField name = new TextField();
     private TextField status = new TextField();
 
@@ -68,10 +74,25 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     public CustomFiltersView(ConfigService configService) {
         this.configService = configService;
         setId("master-detail-view");
+
+        activeFilterKeywords = new Grid<>();
+        activeFilterKeywords.setHeight("30%");
+        activeFilterKeywords.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        activeFilterKeywords.addColumn(Keyword::getValue).setHeader("Keyword");
+        activeFilterKeywords.addColumn(new ComponentRenderer<>(item -> {
+            Button remove = new Button("Remove");
+            remove.addClickListener(buttonClickEvent -> {
+                List<Keyword> items = activeFilterKeywords.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+                items.remove(item);
+                activeFilterKeywords.setItems(items);
+            });
+            return remove;
+        })).setHeader("Action");
+
         // Configure Grid
         statuses = new Grid<>();
         statuses.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-        statuses.setHeightFull();
+        statuses.setHeight("50%");
         statuses.addColumn(CustomFilterCategory::getName).setHeader("Category");
         statuses.addColumn(new ComponentRenderer<>(item -> {
             Span span = new Span(item.getStatus());
@@ -80,7 +101,15 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         })).setFlexGrow(0).setWidth("100px").setHeader("Status");
 
         //when a row is selected or deselected, populate form
-        statuses.asSingleSelect().addValueChangeListener(event -> populateForm(event.getValue()));
+        statuses.asSingleSelect().addValueChangeListener(event -> {
+            CustomFilterCategory filterCategory = event.getValue();
+            populateForm(filterCategory);
+            if (filterCategory != null) {
+                activeFilterKeywords.setItems(filterCategory.getKeywords());
+            } else {
+                activeFilterKeywords.setItems(Collections.emptyList());
+            }
+        });
 
         // Configure Form
         binder = new Binder<>(CustomFilterCategory.class);
@@ -148,6 +177,31 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         wrapper.setWidthFull();
         splitLayout.addToPrimary(wrapper);
         wrapper.add(statuses);
+
+        Hr hr = new Hr();
+        wrapper.add(hr);
+
+        HorizontalLayout buttonWrapper = new HorizontalLayout();
+        buttonWrapper.setPadding(true);
+        FormLayout buttonLayout = new FormLayout();
+        TextField term = new TextField();
+        buttonLayout.addFormItem(term, "Add term");
+        Button add = new Button("Add");
+        add.addClickListener(event -> {
+            List<Keyword> items = activeFilterKeywords.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+            if (term.getValue() != null && !term.getValue().isEmpty()) {
+                items.add(new Keyword(term.getValue()));
+            }
+            activeFilterKeywords.setItems(items);
+        });
+        add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        buttonLayout.add(add);
+        // todo here
+        buttonLayout.setWidth("50%");
+        buttonWrapper.add(buttonLayout);
+
+        wrapper.add(buttonWrapper);
+        wrapper.add(activeFilterKeywords);
     }
 
     private void addFormItem(Div wrapper, FormLayout formLayout,

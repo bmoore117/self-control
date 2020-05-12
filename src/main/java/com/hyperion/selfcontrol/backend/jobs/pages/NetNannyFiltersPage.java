@@ -1,9 +1,6 @@
 package com.hyperion.selfcontrol.backend.jobs.pages;
 
-import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
-import com.hyperion.selfcontrol.backend.ConfigService;
-import com.hyperion.selfcontrol.backend.CustomFilterCategory;
-import com.hyperion.selfcontrol.backend.FilterCategory;
+import com.hyperion.selfcontrol.backend.*;
 import com.hyperion.selfcontrol.backend.config.ContentFilter;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -203,11 +200,11 @@ public class NetNannyFiltersPage {
         listLink.click();
 
         List<WebElement> keywords = driver.findElements(By.cssSelector("li.keyword"));
-        List<String> collectedKeywords = keywords.stream().map(li -> {
+        List<Keyword> collectedKeywords = keywords.stream().map(li -> {
             if (!li.isDisplayed()) {
                 scrollIntoView(li, driver);
             }
-            return li.getText();
+            return new Keyword(li.getText());
         }).collect(Collectors.toList());
 
         WebElement backDiv = driver.findElement(By.cssSelector("div.back"));
