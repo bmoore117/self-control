@@ -170,7 +170,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
         delete.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
-            Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.deleteCategory(driver, category);
+            Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.deleteCategory(driver, category, configService);
             Runnable runnable = Utils.composeWithDriver(function);
             configService.runWithDelay("Delete Custom Filter Category: " + category.getName(), runnable);
         });
@@ -261,11 +261,11 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             currentActive.setKeywords(updatedList);
 
             if (removed.size() == 0 && added.size() > 0) {
-                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive);
+                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive, configService);
                 Supplier<Boolean> booleanSupplier = Utils.composeWithDriver(function);
                 booleanSupplier.get();
             } else if (removed.size() > 0) {
-                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive);
+                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive, configService);
                 Runnable runnable = Utils.composeWithDriver(function);
                 configService.runWithDelay("Save Custom Filter Category: " + currentActive.getName(), runnable);
             }

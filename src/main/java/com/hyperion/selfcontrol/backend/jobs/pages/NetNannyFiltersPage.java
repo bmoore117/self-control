@@ -214,4 +214,69 @@ public class NetNannyFiltersPage {
         log.info(f.toString());
         return f;
     }
+
+    public boolean upsertCustomFilterCategory(CustomFilterCategory category) {
+        try {
+            WebElement addNew = modal.findElement(By.cssSelector("div.add-new"));
+            addNew.click();
+
+            WebElement nameField = modal.findElement(By.cssSelector("input.filter-name-input"));
+            nameField.sendKeys(category.getName());
+
+            WebElement addButton = modal.findElement(By.cssSelector("svg.btn-plus"));
+            addButton.click();
+
+            WebElement phraseField = modal.findElement(By.cssSelector("input.text-field"));
+
+            WebElement phraseList = modal.findElement(By.cssSelector("ul.filter-keywords-list"));
+            List<WebElement> phrases = phraseList.findElements(By.tagName("li"));
+
+            for (WebElement phrase : phrases) {
+                if (!phrase.isDisplayed()) {
+                    scrollIntoView(phrase, driver);
+                }
+                if (!category.getKeywords().contains(new Keyword(phrase.getText().trim()))) {
+                    WebElement removeButton = phrase.findElement(By.tagName("svg"));
+                    removeButton.click();
+                }
+            }
+
+            for (Keyword keyword : category.getKeywords()) {
+                phraseField.sendKeys(keyword.getValue());
+                WebElement addPhraseButton = modal.findElement(By.cssSelector("button.base-button.btn-add"));
+                addPhraseButton.click();
+            }
+
+            WebElement finalSubmitButton = modal.findElement(By.cssSelector("button.base-button.create-button"));
+            finalSubmitButton.click();
+
+            return true;
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    public boolean deleteCustomFilterCategory(CustomFilterCategory category) {
+        try {
+            List<WebElement> filterItems = modal.findElements(By.cssSelector("div.filter-item"));
+            for (WebElement element : filterItems) {
+                if (!element.isDisplayed()) {
+                    scrollIntoView(element, driver);
+                }
+                if (element.getText().equals(category.getName())) {
+                    WebElement link = element.findElement(By.cssSelector("div.filter-name"));
+                    link.click();
+
+                    WebElement deleteButton = modal.findElement(By.cssSelector("button.base-button.delete-button"));
+                    deleteButton.click();
+
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
 }
