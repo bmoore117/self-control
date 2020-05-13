@@ -5,6 +5,7 @@ import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 import com.hyperion.selfcontrol.backend.Keyword;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
+import com.hyperion.selfcontrol.backend.jobs.NetNannyCustomFiltersJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyStatusJob;
 import com.hyperion.selfcontrol.views.main.MainView;
@@ -20,6 +21,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
@@ -38,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,19 +59,22 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFiltersView.class);
 
-    private ConfigService configService;
+    private final ConfigService configService;
 
-    private Grid<CustomFilterCategory> statuses;
+    private final Grid<CustomFilterCategory> statuses;
+    private final Grid<Keyword> activeFilterKeywords;
 
-    private Grid<Keyword> activeFilterKeywords;
+    private final TextField name = new TextField();
+    private final TextField status = new TextField();
 
-    private TextField name = new TextField();
-    private TextField status = new TextField();
+    private final Button setActive = new Button("Set Active");
+    private final Button setInactive = new Button("Set Inactive");
+    private final Button createNew = new Button("Create New Category");
 
-    private Button setActive = new Button("Set Active");
-    private Button setInactive = new Button("Set Inactive");
-
-    private Binder<CustomFilterCategory> binder;
+    private final Binder<CustomFilterCategory> binder;
+    private Button add;
+    private Button save;
+    private TextField term;
 
     @Autowired
     public CustomFiltersView(ConfigService configService) {
@@ -106,8 +112,13 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             populateForm(filterCategory);
             if (filterCategory != null) {
                 activeFilterKeywords.setItems(filterCategory.getKeywords());
+                add.setEnabled(true);
+                save.setEnabled(true);
             } else {
                 activeFilterKeywords.setItems(Collections.emptyList());
+                add.setEnabled(false);
+                save.setEnabled(false);
+                term.clear();
             }
         });
 
@@ -127,7 +138,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                             Collections.singletonList(new CustomFilterCategory(category.getName(), "block"))))
                     .map(NetNannyStatusJob::getNetNannyCustomStatuses);
             Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
-            composedFunction.get().ifPresent(items -> statuses.setItems(items));
+            composedFunction.get().ifPresent(statuses::setItems);
         });
 
         setInactive.addClickListener(e -> {
@@ -139,6 +150,12 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                             Collections.singletonList(new CustomFilterCategory(category.getName(), "inactive"))));
             Runnable composedFunction = Utils.composeWithDriver(function);
             configService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
+        });
+
+        createNew.addClickListener(e -> {
+            List<CustomFilterCategory> categories = statuses.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+            categories.add(new CustomFilterCategory(name.getValue(), CustomFilterCategory.INACTIVE, new ArrayList<>()));
+            statuses.setItems(categories);
         });
 
         SplitLayout splitLayout = new SplitLayout();
@@ -161,13 +178,14 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     }
 
     private void createButtonLayout(Div editorDiv) {
-        HorizontalLayout buttonLayout = new HorizontalLayout();
+        VerticalLayout buttonLayout = new VerticalLayout();
         buttonLayout.setId("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
-        setActive.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        setInactive.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(setActive, setInactive);
+        setActive.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        setInactive.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        createNew.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        buttonLayout.add(createNew, setActive, setInactive);
         editorDiv.add(buttonLayout);
     }
 
@@ -181,26 +199,51 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         Hr hr = new Hr();
         wrapper.add(hr);
 
-        HorizontalLayout buttonWrapper = new HorizontalLayout();
-        buttonWrapper.setPadding(true);
-        FormLayout buttonLayout = new FormLayout();
-        TextField term = new TextField();
-        buttonLayout.addFormItem(term, "Add term");
-        Button add = new Button("Add");
+        HorizontalLayout buttonLayout = new HorizontalLayout();
+        buttonLayout.setPadding(true);
+        buttonLayout.setWidthFull();
+        term = new TextField();
+        term.setPlaceholder("Add term");
+        buttonLayout.add(term);
+        add = new Button("Add");
+        add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add.setWidth("5em");
         add.addClickListener(event -> {
             List<Keyword> items = activeFilterKeywords.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
             if (term.getValue() != null && !term.getValue().isEmpty()) {
                 items.add(new Keyword(term.getValue()));
             }
             activeFilterKeywords.setItems(items);
+            term.clear();
         });
-        add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add.setEnabled(false);
         buttonLayout.add(add);
-        // todo here
-        buttonLayout.setWidth("50%");
-        buttonWrapper.add(buttonLayout);
+        save = new Button("Save");
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        save.setWidth("5em");
+        save.addClickListener(event -> {
+            CustomFilterCategory currentActive = statuses.asSingleSelect().getValue();
+            List<Keyword> updatedList = activeFilterKeywords.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+            List<Keyword> oldList = currentActive.getKeywords();
 
-        wrapper.add(buttonWrapper);
+            List<Keyword> added = updatedList.stream().filter(keyword -> !oldList.contains(keyword)).collect(Collectors.toList());
+            List<Keyword> removed = oldList.stream().filter(keyword -> !updatedList.contains(keyword)).collect(Collectors.toList());
+
+            currentActive.setKeywords(updatedList);
+
+            if (removed.size() == 0 && added.size() > 0) {
+                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive);
+                Supplier<Boolean> booleanSupplier = Utils.composeWithDriver(function);
+                booleanSupplier.get();
+            } else if (removed.size() > 0) {
+                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive);
+                Runnable runnable = Utils.composeWithDriver(function);
+                configService.runWithDelay("Save Custom Filter Category: " + currentActive.getName(), runnable);
+            }
+        });
+        save.setEnabled(false);
+        buttonLayout.add(save);
+        wrapper.add(buttonLayout);
         wrapper.add(activeFilterKeywords);
     }
 
@@ -237,7 +280,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     public void doAfterNavigation(WebDriver driver) {
         Optional<List<CustomFilterCategory>> filterCategories = NetNannyBaseJob.navigateToProfile(driver, configService)
                 .map(NetNannyStatusJob::getNetNannyCustomStatuses);
-        filterCategories.ifPresent(categories -> statuses.setItems(categories));
+        filterCategories.ifPresent(statuses::setItems);
     }
 
     private void populateForm(CustomFilterCategory value) {

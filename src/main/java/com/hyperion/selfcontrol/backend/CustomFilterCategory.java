@@ -6,6 +6,8 @@ public class CustomFilterCategory extends AbstractFilterCategory {
 
     public List<Keyword> keywords;
 
+    public static final String INACTIVE = "inactive";
+
     public CustomFilterCategory(String name, String status) {
         this(name, status, null);
     }
@@ -14,7 +16,7 @@ public class CustomFilterCategory extends AbstractFilterCategory {
         this.keywords = keywords;
         this.name = name;
         this.status = status;
-        if ("inactive".equals(status.toLowerCase())) {
+        if (INACTIVE.equals(status.toLowerCase())) {
             theme = "badge";
         } else if ("block".equals(status.toLowerCase())) {
             theme = "badge success";
@@ -35,5 +37,9 @@ public class CustomFilterCategory extends AbstractFilterCategory {
 
     public List<Keyword> getKeywords() {
         return keywords;
+    }
+
+    public void setKeywords(List<Keyword> keywords) {
+        this.keywords = keywords;
     }
 }
