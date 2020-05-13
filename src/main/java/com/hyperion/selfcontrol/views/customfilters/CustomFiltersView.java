@@ -115,11 +115,15 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 add.setEnabled(true);
                 save.setEnabled(true);
                 delete.setEnabled(true);
+                setActive.setEnabled(true);
+                setInactive.setEnabled(true);
             } else {
                 activeFilterKeywords.setItems(Collections.emptyList());
                 add.setEnabled(false);
                 save.setEnabled(false);
                 delete.setEnabled(false);
+                setActive.setEnabled(false);
+                setInactive.setEnabled(false);
                 term.clear();
             }
         });
@@ -142,6 +146,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
             composedFunction.get().ifPresent(statuses::setItems);
         });
+        setActive.setEnabled(false);
 
         setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
@@ -153,11 +158,14 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             Runnable composedFunction = Utils.composeWithDriver(function);
             configService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
         });
+        setInactive.setEnabled(false);
 
         createNew.addClickListener(e -> {
-            List<CustomFilterCategory> categories = statuses.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
-            categories.add(new CustomFilterCategory(name.getValue(), CustomFilterCategory.INACTIVE, new ArrayList<>()));
-            statuses.setItems(categories);
+            if (name.getValue() != null && !name.getValue().isEmpty() && !name.getValue().equals("")) {
+                List<CustomFilterCategory> categories = statuses.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+                categories.add(new CustomFilterCategory(name.getValue(), CustomFilterCategory.INACTIVE, new ArrayList<>()));
+                statuses.setItems(categories);
+            }
         });
 
         delete.addClickListener(e -> {
