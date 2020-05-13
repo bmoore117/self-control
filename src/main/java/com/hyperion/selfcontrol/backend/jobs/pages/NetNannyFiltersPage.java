@@ -21,8 +21,8 @@ public class NetNannyFiltersPage {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyFiltersPage.class);
 
-    private WebDriver driver;
-    private WebElement modal;
+    private final WebDriver driver;
+    private final WebElement modal;
 
     public static final String CONTENT_FILTERS = "net nanny content filters";
     public static final String CUSTOM_CONTENT_FILTERS = "custom content filters";
@@ -217,41 +217,73 @@ public class NetNannyFiltersPage {
 
     public boolean upsertCustomFilterCategory(CustomFilterCategory category) {
         try {
-            WebElement addNew = modal.findElement(By.cssSelector("div.add-new"));
-            addNew.click();
-
-            WebElement nameField = modal.findElement(By.cssSelector("input.filter-name-input"));
-            nameField.sendKeys(category.getName());
-
-            WebElement addButton = modal.findElement(By.cssSelector("svg.btn-plus"));
-            addButton.click();
-
-            WebElement phraseField = modal.findElement(By.cssSelector("input.text-field"));
-
-            WebElement phraseList = modal.findElement(By.cssSelector("ul.filter-keywords-list"));
-            List<WebElement> phrases = phraseList.findElements(By.tagName("li"));
-
-            for (WebElement phrase : phrases) {
-                if (!phrase.isDisplayed()) {
-                    scrollIntoView(phrase, driver);
+            log.info("Searching for existing category with name: {}", category.getName());
+            List<WebElement> filterItems = driver.findElements(By.cssSelector("div.filter-item"));
+            WebElement existingCategory = null;
+            for (WebElement element : filterItems) {
+                if (!element.isDisplayed()) {
+                    scrollIntoView(element, driver);
                 }
-                if (!category.getKeywords().contains(new Keyword(phrase.getText().trim()))) {
-                    WebElement removeButton = phrase.findElement(By.tagName("svg"));
-                    removeButton.click();
+                if (element.getText().contains(category.getName())) {
+                    log.info("Existing category found");
+                    existingCategory = element.findElement(By.cssSelector("div.filter-name"));
+                    break;
                 }
             }
 
+            if (existingCategory != null) {
+                existingCategory.click();
+            } else {
+                log.info("Existing category not found, creating new category");
+                WebElement addNew = driver.findElement(By.cssSelector("div.add-new"));
+                addNew.click();
+
+                WebElement nameField = driver.findElement(By.cssSelector("input.filter-name-input"));
+                nameField.sendKeys(category.getName());
+            }
+
+            boolean madeRemoval;
+            do {
+                madeRemoval = false;
+                WebElement phraseList = driver.findElement(By.cssSelector("ul.filter-keywords-list"));
+                List<WebElement> phrases = phraseList.findElements(By.tagName("li"));
+                for (WebElement phrase : phrases) {
+                    if (!phrase.isDisplayed()) {
+                        scrollIntoView(phrase, driver);
+                    }
+                    if (!category.getKeywords().contains(new Keyword(phrase.getText().trim()))) {
+                        log.info("Removing element {}", phrase.getText().trim());
+                        WebElement removeButton = phrase.findElement(By.tagName("svg"));
+                        removeButton.click();
+                        madeRemoval = true;
+                        break;
+                    }
+                }
+            } while (madeRemoval);
+
+            WebElement addButton = driver.findElement(By.cssSelector("svg.btn-plus"));
+            addButton.click();
+
             for (Keyword keyword : category.getKeywords()) {
+                log.info("Adding phrase {}", keyword.getValue());
+                WebElement phraseField = driver.findElement(By.cssSelector("input.text-field"));
                 phraseField.sendKeys(keyword.getValue());
-                WebElement addPhraseButton = modal.findElement(By.cssSelector("button.base-button.btn-add"));
+                WebElement addPhraseButton = driver.findElement(By.cssSelector("button.base-button.btn-add"));
                 addPhraseButton.click();
             }
 
-            WebElement finalSubmitButton = modal.findElement(By.cssSelector("button.base-button.create-button"));
+            WebElement finalSubmitButton;
+            if (existingCategory != null) {
+                finalSubmitButton = driver.findElement(By.cssSelector("button.base-button.update-button"));
+            } else {
+                finalSubmitButton = driver.findElement(By.cssSelector("button.base-button.create-button"));
+            }
             finalSubmitButton.click();
 
+            log.info("Job successful");
             return true;
         } catch (RuntimeException ex) {
+            log.error("Error upserting", ex);
             return false;
         }
     }
@@ -263,11 +295,11 @@ public class NetNannyFiltersPage {
                 if (!element.isDisplayed()) {
                     scrollIntoView(element, driver);
                 }
-                if (element.getText().equals(category.getName())) {
+                if (element.getText().contains(category.getName())) {
                     WebElement link = element.findElement(By.cssSelector("div.filter-name"));
                     link.click();
 
-                    WebElement deleteButton = modal.findElement(By.cssSelector("button.base-button.delete-button"));
+                    WebElement deleteButton = driver.findElement(By.cssSelector("button.base-button.delete-button"));
                     deleteButton.click();
 
                     return true;
@@ -276,6 +308,7 @@ public class NetNannyFiltersPage {
 
             return false;
         } catch (RuntimeException ex) {
+            log.error("Error deleting", ex);
             return false;
         }
     }
