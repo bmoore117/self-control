@@ -8,4 +8,8 @@ public class NetNannyCustomFiltersJob {
     public static boolean saveCustomFilters(WebDriver driver, CustomFilterCategory customFilterCategory) {
         return false;
     }
+
+    public static void deleteCategory(WebDriver driver, CustomFilterCategory category) {
+
+    }
 }

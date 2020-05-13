@@ -21,7 +21,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
@@ -69,7 +68,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
     private final Button setActive = new Button("Set Active");
     private final Button setInactive = new Button("Set Inactive");
-    private final Button createNew = new Button("Create New Category");
+    private final Button createNew = new Button("Create");
+    private final Button delete = new Button("Delete");
 
     private final Binder<CustomFilterCategory> binder;
     private Button add;
@@ -114,10 +114,12 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 activeFilterKeywords.setItems(filterCategory.getKeywords());
                 add.setEnabled(true);
                 save.setEnabled(true);
+                delete.setEnabled(true);
             } else {
                 activeFilterKeywords.setItems(Collections.emptyList());
                 add.setEnabled(false);
                 save.setEnabled(false);
+                delete.setEnabled(false);
                 term.clear();
             }
         });
@@ -158,6 +160,14 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             statuses.setItems(categories);
         });
 
+        delete.addClickListener(e -> {
+            CustomFilterCategory category = statuses.asSingleSelect().getValue();
+            Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.deleteCategory(driver, category);
+            Runnable runnable = Utils.composeWithDriver(function);
+            configService.runWithDelay("Delete Custom Filter Category: " + category.getName(), runnable);
+        });
+        delete.setEnabled(false);
+
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
 
@@ -178,16 +188,26 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     }
 
     private void createButtonLayout(Div editorDiv) {
-        VerticalLayout buttonLayout = new VerticalLayout();
-        buttonLayout.setId("button-layout");
+        HorizontalLayout buttonLayout = new HorizontalLayout();
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
         buttonLayout.setPadding(false);
+        buttonLayout.setClassName("button-layout");
         setActive.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        setActive.getStyle().set("width", "7em");
         setInactive.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        createNew.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(createNew, setActive, setInactive);
+        setInactive.getStyle().set("width", "7em");
+        buttonLayout.add(setActive, setInactive);
         editorDiv.add(buttonLayout);
+        HorizontalLayout secondRow = new HorizontalLayout();
+        secondRow.setClassName("button-layout");
+        secondRow.setWidthFull();
+        secondRow.setSpacing(true);
+        secondRow.setPadding(false);
+        createNew.getStyle().set("width", "7em");
+        delete.getStyle().set("width", "7em");
+        secondRow.add(createNew, delete);
+        editorDiv.add(secondRow);
     }
 
     private void createGridLayout(SplitLayout splitLayout) {
