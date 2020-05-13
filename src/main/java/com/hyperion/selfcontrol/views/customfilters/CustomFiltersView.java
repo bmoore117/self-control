@@ -182,6 +182,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         buttonLayout.setId("button-layout");
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
+        buttonLayout.setPadding(false);
         setActive.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         setInactive.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         createNew.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
