@@ -233,6 +233,9 @@ public class NetNannyFiltersPage {
 
             if (existingCategory != null) {
                 existingCategory.click();
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ignored) {}
             } else {
                 log.info("Existing category not found, creating new category");
                 WebElement addNew = driver.findElement(By.cssSelector("div.add-new"));
@@ -241,6 +244,13 @@ public class NetNannyFiltersPage {
                 WebElement nameField = driver.findElement(By.cssSelector("input.filter-name-input"));
                 nameField.sendKeys(category.getName());
             }
+
+            WebElement modal = driver.findElement(By.cssSelector("div.modal"));
+            WebElement addButton = modal.findElement(By.cssSelector("svg.btn-plus"));
+            if (addButton.isDisplayed()) {
+                scrollIntoView(addButton, driver);
+            }
+            addButton.click();
 
             boolean madeRemoval;
             do {
@@ -261,14 +271,17 @@ public class NetNannyFiltersPage {
                 }
             } while (madeRemoval);
 
-            WebElement addButton = driver.findElement(By.cssSelector("svg.btn-plus"));
-            addButton.click();
-
             for (Keyword keyword : category.getKeywords()) {
                 log.info("Adding phrase {}", keyword.getValue());
                 WebElement phraseField = driver.findElement(By.cssSelector("input.text-field"));
+                if (!phraseField.isDisplayed()) {
+                    scrollIntoView(phraseField, driver);
+                }
                 phraseField.sendKeys(keyword.getValue());
                 WebElement addPhraseButton = driver.findElement(By.cssSelector("button.base-button.btn-add"));
+                if (!addPhraseButton.isDisplayed()) {
+                    scrollIntoView(addPhraseButton, driver);
+                }
                 addPhraseButton.click();
             }
 
@@ -277,6 +290,9 @@ public class NetNannyFiltersPage {
                 finalSubmitButton = driver.findElement(By.cssSelector("button.base-button.update-button"));
             } else {
                 finalSubmitButton = driver.findElement(By.cssSelector("button.base-button.create-button"));
+            }
+            if (!finalSubmitButton.isDisplayed()) {
+                scrollIntoView(finalSubmitButton, driver);
             }
             finalSubmitButton.click();
 

@@ -27,7 +27,7 @@ public class NetNannyLoginPage {
 
     public boolean navigateToLoginPage() {
         driver.navigate().to("https://parent.netnanny.com/#/login");
-        WebDriverWait wait = new WebDriverWait(driver, 10);
+        WebDriverWait wait = new WebDriverWait(driver, 30);
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(
                 By.id("email")));
 
