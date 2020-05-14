@@ -241,6 +241,10 @@ public class NetNannyFiltersPage {
                 WebElement addNew = driver.findElement(By.cssSelector("div.add-new"));
                 addNew.click();
 
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ignored) {}
+
                 WebElement nameField = driver.findElement(By.cssSelector("input.filter-name-input"));
                 nameField.sendKeys(category.getName());
             }
