@@ -41,7 +41,7 @@ public class ConfigService {
         try {
             File protectedLocation = new File(FILE_LOCATION);
             File protectedFile = new File(FILE_LOCATION + "\\" + FILE_NAME);
-            if (!protectedLocation.exists()) {
+            if (!protectedFile.exists()) {
                 config = new Config();
                 protectedLocation.mkdirs();
                 Files.write(Paths.get(protectedFile.getAbsolutePath()), mapper.writerWithDefaultPrettyPrinter()
@@ -53,7 +53,7 @@ public class ConfigService {
             FILE_LOCATION = "self-control";
             File unProtectedLocation = new File(FILE_LOCATION);
             File unProtectedFile = new File(FILE_LOCATION + "\\" + FILE_NAME);
-            if (!unProtectedLocation.exists()) {
+            if (!unProtectedFile.exists()) {
                 unProtectedLocation.mkdirs();
                 Files.write(Paths.get(unProtectedFile.getAbsolutePath()), mapper.writerWithDefaultPrettyPrinter()
                         .writeValueAsString(config).getBytes());
