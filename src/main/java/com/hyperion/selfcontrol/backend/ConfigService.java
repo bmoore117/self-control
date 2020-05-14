@@ -9,8 +9,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.DayOfWeek;
@@ -24,7 +24,8 @@ public class ConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigService.class);
 
-    public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control\\credentials.json";
+    public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control";
+    public static final String FILE_NAME = "config.json";
     public static final String STOCK_PASSWORD = "P@ssw0rd";
 
     private Config config;
@@ -38,10 +39,27 @@ public class ConfigService {
 
     public void refreshFile() throws IOException {
         try {
-            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
-        } catch (FileNotFoundException e) {
-            FILE_LOCATION = "C:\\Users\\moore\\self-control\\credentials.json";
-            config = mapper.readValue(new File(FILE_LOCATION), Config.class);
+            File protectedLocation = new File(FILE_LOCATION);
+            File protectedFile = new File(FILE_LOCATION + "\\" + FILE_NAME);
+            if (!protectedLocation.exists()) {
+                config = new Config();
+                protectedLocation.mkdirs();
+                Files.write(Paths.get(protectedFile.getAbsolutePath()), mapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(config).getBytes());
+            } else {
+                config = mapper.readValue(protectedFile, Config.class);
+            }
+        } catch (AccessDeniedException e) {
+            FILE_LOCATION = "self-control";
+            File unProtectedLocation = new File(FILE_LOCATION);
+            File unProtectedFile = new File(FILE_LOCATION + "\\" + FILE_NAME);
+            if (!unProtectedLocation.exists()) {
+                unProtectedLocation.mkdirs();
+                Files.write(Paths.get(unProtectedFile.getAbsolutePath()), mapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(config).getBytes());
+            } else {
+                config = mapper.readValue(unProtectedFile, Config.class);
+            }
         }
         log.info("Loaded file from " + FILE_LOCATION);
     }
@@ -105,14 +123,22 @@ public class ConfigService {
 
     public List<Credentials> getCredentials() {
         if (isEnabled()) {
-            return new ArrayList<>(config.getCredentials());
+            if (config.getCredentials() == null) {
+                return Collections.emptyList();
+            } else {
+                return new ArrayList<>(config.getCredentials());
+            }
         } else {
             return Collections.emptyList();
         }
     }
 
     public boolean isEnabled() {
-        return 0 == config.getDelay();
+        if (config.getDelay() != null) {
+            return 0 == config.getDelay();
+        } else {
+            return true;
+        }
     }
 
     public long getDelay() {
@@ -130,7 +156,8 @@ public class ConfigService {
 
     public void writeFile() {
         try {
-            Files.write(Paths.get(FILE_LOCATION), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(config).getBytes());
+            Files.write(Paths.get(FILE_LOCATION + "\\" + FILE_NAME), mapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(config).getBytes());
         } catch (IOException e) {
             log.error("Error writing new delay", e);
         }

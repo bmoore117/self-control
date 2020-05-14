@@ -3,6 +3,7 @@ package com.hyperion.selfcontrol.backend.config;
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class Config {
@@ -34,6 +35,9 @@ public class Config {
     }
 
     public Set<Credentials> getCredentials() {
+        if (credentials == null) {
+            credentials = new HashSet<>();
+        }
         return credentials;
     }
 
@@ -53,6 +57,9 @@ public class Config {
     }
 
     public Bedtimes getBedtimes() {
+        if (bedtimes == null) {
+            bedtimes = new Bedtimes();
+        }
         return bedtimes;
     }
 
