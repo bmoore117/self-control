@@ -101,9 +101,12 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         // the grid valueChangeEvent will clear the form too
         saveCredentials.addClickListener(e -> {
             Credentials credentials = new Credentials(password.getValue(), username.getValue(), tag.getValue());
-            this.credentials.asSingleSelect().clear();
             configService.setCredentials(credentials);
             this.credentials.setItems(configService.getCredentials());
+            this.credentials.asSingleSelect().clear();
+            password.clear();
+            username.clear();
+            tag.clear();
         });
         saveCredentials.setEnabled(configService.isEnabled());
 
