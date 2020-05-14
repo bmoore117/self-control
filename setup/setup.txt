@@ -1,0 +1,8 @@
+docker run -d --restart always -p 4444:4444 selenium/standalone-chrome
+
+next copy winsw.exe and winsw.xml to the user folder you have created, preferably ben-local.
+
+.\winsw.exe install
+
+See OneDrive for Net Nanny installer
+

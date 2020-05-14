@@ -1,0 +1,7 @@
+<service>
+	<id>Self-Control</id>
+	<name>Self-Control</name>
+	<description>Wrap Net Nanny with Pluckeye style delay</description>
+	<executable>java</executable>
+	<arguments>-jar self-control-1.0.jar</arguments>
+</service>
