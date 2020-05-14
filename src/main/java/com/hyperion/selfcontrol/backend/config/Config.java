@@ -27,6 +27,9 @@ public class Config {
     }
 
     public Long getDelay() {
+        if (delay == null) {
+            delay = 0L;
+        }
         return delay;
     }
 
