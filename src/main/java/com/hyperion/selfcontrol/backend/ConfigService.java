@@ -122,14 +122,10 @@ public class ConfigService {
     }
 
     public List<Credentials> getCredentials() {
-        if (isEnabled()) {
-            if (config.getCredentials() == null) {
-                return Collections.emptyList();
-            } else {
-                return new ArrayList<>(config.getCredentials());
-            }
-        } else {
+        if (config.getCredentials() == null) {
             return Collections.emptyList();
+        } else {
+            return new ArrayList<>(config.getCredentials());
         }
     }
 

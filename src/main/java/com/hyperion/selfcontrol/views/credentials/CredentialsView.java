@@ -246,7 +246,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         generate.addClickListener(buttonClickEvent -> {
             int status = Utils.changePassword(ConfigService.STOCK_PASSWORD);
             if (status == 0) {
-                credentials.getDataProvider().fetch(new Query<>())
+                configService.getCredentials().stream()
                         .filter(credentials -> credentials.getTag().contains("local"))
                         .findFirst()
                         .ifPresent(item -> {
