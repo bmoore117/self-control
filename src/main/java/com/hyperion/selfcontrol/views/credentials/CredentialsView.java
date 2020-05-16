@@ -214,6 +214,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                 passwordLabel.setText("Check logs for error");
             }
         });
+        if (!configService.isEnabled() && !configService.isHallPassUsed()) {
+            generate.setEnabled(false);
+        }
         buttonLayout.add(generate);
         buttonLayout.add(passwordLabel);
         editorDiv.add(buttonLayout);
