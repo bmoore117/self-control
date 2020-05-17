@@ -16,3 +16,18 @@ Then also think about upgrading the hall pass system to have an "end hall pass" 
 and changes password, resets delay (probably to 30 minutes or so) on click.
 
 Lastly of course CRUD on custom filters
+
+----
+
+for custom pluckeye:
+
+you can use the default GPOs if you block shells. This would mean giving up programming, but could work. downside: always another shell-runner.
+
+alternately: generate firewall rules for each non-approved browser, don't worry about blocking launch. this ackchyually. if exe name is a known name, block. Get list.
+
+Then switch chrome to administrator managed, and install pluckeye. Or create your own extension which would talk to your self-control backend.
+
+
+Getting list of browsers:
+
+https://stackoverflow.com/questions/43633190/getting-a-list-of-installed-browsers-on-the-computer
