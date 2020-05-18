@@ -6,3 +6,8 @@ next copy winsw.exe and winsw.xml to the user folder you have created, preferabl
 
 See OneDrive for Net Nanny installer
 
+Upgrade to new Edge from store, block using following steps:
+Start -> Local Security Policy -> Software Restriction Policies -> Right click additional rules -> browse ->
+select C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+
+This should be good enough, as edge lives in program files and can't be modified by you while adminless

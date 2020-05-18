@@ -31,3 +31,13 @@ Then switch chrome to administrator managed, and install pluckeye. Or create you
 Getting list of browsers:
 
 https://stackoverflow.com/questions/43633190/getting-a-list-of-installed-browsers-on-the-computer
+
+https://www.urtech.ca/2019/07/solved-gpo-to-block-software-by-file-name-path-hash-or-certificate/
+
+Updated: win 10 does allow software restriction policies through local security policy, which is technically *not* a
+GPO, though it does interact with the registry ultimately. Different path to setting registry settings I guess.
+
+Seemingly not scriptable through powershell directly, only editable through secedit.exe
+https://stackoverflow.com/questions/23260656/modify-local-security-policy-using-powershell
+
+Design for the rest of browsers will be to update NN to have a custom filter to screen them
