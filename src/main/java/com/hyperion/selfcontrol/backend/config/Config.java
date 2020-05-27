@@ -2,8 +2,10 @@ package com.hyperion.selfcontrol.backend.config;
 
 import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
+import com.hyperion.selfcontrol.backend.config.job.Job;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Config {
@@ -13,6 +15,7 @@ public class Config {
     private State state;
     private Boolean hallPassUsed;
     private Bedtimes bedtimes;
+    private List<Job> pendingJobs;
 
     public Boolean isHallPassUsed() {
         if (hallPassUsed == null) {
@@ -68,5 +71,13 @@ public class Config {
 
     public void setBedtimes(Bedtimes bedtimes) {
         this.bedtimes = bedtimes;
+    }
+
+    public List<Job> getPendingJobs() {
+        return pendingJobs;
+    }
+
+    public void setPendingJobs(List<Job> pendingJobs) {
+        this.pendingJobs = pendingJobs;
     }
 }

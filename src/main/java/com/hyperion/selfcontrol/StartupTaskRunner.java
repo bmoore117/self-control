@@ -2,6 +2,7 @@ package com.hyperion.selfcontrol;
 
 import com.hyperion.selfcontrol.backend.BedtimeService;
 import com.hyperion.selfcontrol.backend.ConfigService;
+import com.hyperion.selfcontrol.backend.JobRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,13 @@ public class StartupTaskRunner implements ApplicationRunner {
 
     private final ConfigService configService;
     private final BedtimeService bedtimeService;
+    private final JobRunner jobRunner;
 
     @Autowired
-    public StartupTaskRunner(ConfigService configService, BedtimeService bedtimeService) {
+    public StartupTaskRunner(ConfigService configService, BedtimeService bedtimeService, JobRunner jobRunner) {
         this.configService = configService;
         this.bedtimeService = bedtimeService;
+        this.jobRunner = jobRunner;
     }
 
     @Override
@@ -52,5 +55,6 @@ public class StartupTaskRunner implements ApplicationRunner {
 
         configService.resetHallPassForTheWeek();
         bedtimeService.scheduleToday(configService.getConfig().getBedtimes());
+        jobRunner.runReadyJobs();
     }
 }

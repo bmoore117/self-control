@@ -261,11 +261,11 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             currentActive.setKeywords(updatedList);
 
             if (removed.size() == 0 && added.size() > 0) {
-                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive, configService);
+                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilter(driver, currentActive, configService);
                 Supplier<Boolean> booleanSupplier = Utils.composeWithDriver(function);
                 booleanSupplier.get();
             } else if (removed.size() > 0) {
-                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilters(driver, currentActive, configService);
+                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilter(driver, currentActive, configService);
                 Runnable runnable = Utils.composeWithDriver(function);
                 configService.runWithDelay("Save Custom Filter Category: " + currentActive.getName(), runnable);
             }

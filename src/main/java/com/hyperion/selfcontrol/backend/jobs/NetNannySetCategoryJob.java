@@ -4,6 +4,7 @@ import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
 import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ public class NetNannySetCategoryJob {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
 
-    public static Optional<NetNannyProfile> setCategories(NetNannyProfile profile, ConfigService configService, String menuItem, List<AbstractFilterCategory> filterCategories) {
+    private static Optional<NetNannyProfile> setCategoriesInternal(NetNannyProfile profile, ConfigService configService, String menuItem, List<AbstractFilterCategory> filterCategories) {
         Optional<NetNannyFiltersPage> filtersOpt = profile.clickFiltersMenu(menuItem);
         log.info("Opening restrictions menu");
         if (!filtersOpt.isPresent()) {
@@ -25,5 +26,13 @@ public class NetNannySetCategoryJob {
         NetNannyFiltersPage filtersPage = filtersOpt.get();
         filtersPage.findAndDo(configService, filterCategories, true);
         return Optional.of(filtersPage.close());
+    }
+
+    public static boolean setCategories(WebDriver driver, ConfigService configService, String menuItem, List<AbstractFilterCategory> filterCategories) {
+       return NetNannyBaseJob.navigateToProfile(driver, configService)
+               .map(profile -> profile.clickFiltersMenu(menuItem)
+                       .map(filtersPage -> filtersPage.findAndDo(configService, filterCategories, true))
+                       .orElse(false))
+               .orElse(false);
     }
 }

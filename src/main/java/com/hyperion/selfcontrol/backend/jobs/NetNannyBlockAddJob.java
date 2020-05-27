@@ -1,8 +1,10 @@
 package com.hyperion.selfcontrol.backend.jobs;
 
 import com.hyperion.selfcontrol.Pair;
+import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Website;
 import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +27,19 @@ public class NetNannyBlockAddJob {
         }).orElse(new Pair<>(Collections.emptyList(), Collections.emptyList()));
     }
 
-    public static boolean addItem(NetNannyProfile profile, String website, boolean isAllow) {
+    private static boolean addItemInternal(NetNannyProfile profile, String website, boolean isAllow) {
         return profile.clickBlockAdd().map(page -> page.addItem(website, isAllow)).orElse(false);
     }
 
-    public static boolean removeItem(NetNannyProfile profile, String website, boolean isAllow) {
+    private static boolean removeItemInternal(NetNannyProfile profile, String website, boolean isAllow) {
         return profile.clickBlockAdd().map(page -> page.removeItem(website, isAllow)).orElse(false);
+    }
+
+    public static boolean addItem(WebDriver driver, ConfigService configService, String website, boolean isAllow) {
+        return NetNannyBaseJob.navigateToProfile(driver, configService).map(profile -> addItemInternal(profile, website, isAllow)).orElse(false);
+    }
+
+    public static boolean removeItem(WebDriver driver, ConfigService configService, String website, boolean isAllow) {
+        return NetNannyBaseJob.navigateToProfile(driver, configService).map(profile -> removeItemInternal(profile, website, isAllow)).orElse(false);
     }
 }

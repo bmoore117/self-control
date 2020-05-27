@@ -39,7 +39,8 @@ public class NetNannyFiltersPage {
         return new NetNannyProfile(driver);
     }
 
-    public void findAndDo(ConfigService configService, List<AbstractFilterCategory> filterCategories, boolean writeFile) {
+    public boolean findAndDo(ConfigService configService, List<AbstractFilterCategory> filterCategories, boolean writeFile) {
+        boolean returnValue = true;
         for (AbstractFilterCategory filterCategory : filterCategories) {
             Optional<WebElement> row;
             boolean isCustomContentFilter;
@@ -76,8 +77,11 @@ public class NetNannyFiltersPage {
                 }
             } else {
                 log.warn("Expected row not present: " + filterCategory.getName());
+                returnValue = false;
             }
         }
+
+        return returnValue;
     }
 
     private void updateContentFilters(List<ContentFilter> contentFilters, String category, String action) {
