@@ -4,6 +4,7 @@ import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.backend.config.job.Job;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,6 +75,9 @@ public class Config {
     }
 
     public List<Job> getPendingJobs() {
+        if (pendingJobs == null) {
+            pendingJobs = new ArrayList<>();
+        }
         return pendingJobs;
     }
 
