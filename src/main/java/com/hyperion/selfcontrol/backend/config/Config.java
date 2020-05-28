@@ -17,6 +17,7 @@ public class Config {
     private Boolean hallPassUsed;
     private Bedtimes bedtimes;
     private List<Job> pendingJobs;
+    private List<Job> retryJobs;
 
     public Boolean isHallPassUsed() {
         if (hallPassUsed == null) {
@@ -83,5 +84,16 @@ public class Config {
 
     public void setPendingJobs(List<Job> pendingJobs) {
         this.pendingJobs = pendingJobs;
+    }
+
+    public List<Job> getRetryJobs() {
+        if (retryJobs == null) {
+            retryJobs = new ArrayList<>();
+        }
+        return retryJobs;
+    }
+
+    public void setRetryJobs(List<Job> retryJobs) {
+        this.retryJobs = retryJobs;
     }
 }

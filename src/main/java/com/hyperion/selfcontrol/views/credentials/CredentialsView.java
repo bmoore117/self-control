@@ -3,6 +3,7 @@ package com.hyperion.selfcontrol.views.credentials;
 import com.hyperion.selfcontrol.backend.*;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.backend.config.job.SetDelayJob;
+import com.hyperion.selfcontrol.backend.config.job.UpdateBedtimesJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
@@ -170,6 +171,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         Hr hr3 = new Hr();
         editorDiv.add(hr3);
         createWeekendHallPassLayout(editorDiv);
+        createRetryLayout(editorDiv);
+        createDeleteLayout(editorDiv);
 
         splitLayout.addToSecondary(editorDiv);
     }
@@ -273,6 +276,42 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         editorDiv.add(buttonLayout);
     }
 
+    private void createRetryLayout(Div editorDiv) {
+        VerticalLayout buttonLayout = new VerticalLayout();
+        buttonLayout.setClassName("button-layout");
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        buttonLayout.getStyle().set("padding-right", "0");
+        Button button = new Button("Retry failed jobs");
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(buttonClickEvent -> {
+            jobRunner.retryFailedJobs();
+        });
+        if (configService.getConfig().getRetryJobs().isEmpty()) {
+            button.setEnabled(false);
+        }
+        buttonLayout.add(button);
+        editorDiv.add(buttonLayout);
+    }
+
+    private void createDeleteLayout(Div editorDiv) {
+        VerticalLayout buttonLayout = new VerticalLayout();
+        buttonLayout.setClassName("button-layout");
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        buttonLayout.getStyle().set("padding-right", "0");
+        Button button = new Button("Delete failed jobs");
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(buttonClickEvent -> {
+            jobRunner.deleteFailedJobs();
+        });
+        if (configService.getConfig().getRetryJobs().isEmpty()) {
+            button.setEnabled(false);
+        }
+        buttonLayout.add(button);
+        editorDiv.add(buttonLayout);
+    }
+
     private void createGridLayout(SplitLayout splitLayout) {
         Div wrapper = new Div();
         wrapper.setId("wrapper");
@@ -321,11 +360,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> {
             Bedtimes bedtimes = bedtimesBinder.getBean();
-            configService.runWithDelay("Update bedtimes action", () -> {
-                configService.getConfig().setBedtimes(bedtimes);
-                configService.writeFile();
-                bedtimeService.scheduleToday(bedtimes);
-            });
+            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+            UpdateBedtimesJob bedtimesJob = new UpdateBedtimesJob(time, "Update bedtimes job", bedtimes);
+            jobRunner.queueJob(bedtimesJob);
         });
         buttonLayout.add(saveButton);
         wrapper.add(buttonLayout);

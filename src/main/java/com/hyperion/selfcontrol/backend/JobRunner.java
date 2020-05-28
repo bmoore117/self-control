@@ -11,20 +11,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Service
 public class JobRunner {
 
     private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
     private final ConfigService configService;
+    private final BedtimeService bedtimeService;
 
     @Autowired
-    public JobRunner(ConfigService configService) {
+    public JobRunner(ConfigService configService, BedtimeService bedtimeService) {
         this.configService = configService;
+        this.bedtimeService = bedtimeService;
     }
 
     public boolean queueJob(Job job) {
@@ -43,9 +47,66 @@ public class JobRunner {
     }
 
     public void runReadyJobs() {
-        configService.getConfig().getPendingJobs().stream()
+        retryFailedJobsInternal(false);
+
+        List<Job> jobs = configService.getConfig().getPendingJobs().stream()
                 .filter(job -> !job.getJobLaunchTime().isAfter(LocalDateTime.now()))
-                .forEach(this::runJob);
+                .collect(Collectors.toList());
+
+        for (Job job : jobs) {
+            RuntimeException e = null;
+            boolean result = true;
+            try {
+                result = runJob(job);
+            } catch (RuntimeException ex) {
+                e = ex;
+                log.error("Error running job, moving to manual retry queue", ex);
+                configService.getConfig().getRetryJobs().add(job);
+            }
+
+            if (e == null && result) {
+                configService.getConfig().getPendingJobs().remove(job);
+            } else if (!result) {
+                log.error("Job {} did not return success, moving to retry queue", job.getJobDescription());
+                configService.getConfig().getRetryJobs().add(job);
+            }
+        }
+
+        configService.writeFile();
+    }
+
+    public void retryFailedJobs() {
+        retryFailedJobsInternal(true);
+    }
+
+    public void deleteFailedJobs() {
+        configService.getConfig().getRetryJobs().clear();
+        configService.writeFile();
+    }
+
+    private void retryFailedJobsInternal(boolean writeFile) {
+        for (Job job : configService.getConfig().getRetryJobs()) {
+            log.info("Retrying previously errored job {}", job.getJobDescription());
+            RuntimeException e = null;
+            boolean result = true;
+            try {
+                result = runJob(job);
+            } catch (RuntimeException ex) {
+                e = ex;
+                log.error("Retry of job failed, leaving in retry queue");
+            }
+
+            if (e == null && result) {
+                log.info("Job succeeded, removing from queue");
+                configService.getConfig().getRetryJobs().remove(job);
+            } else if (!result) {
+                log.error("Retry of job {} did not return success, leaving in retry queue", job.getJobDescription());
+            }
+        }
+
+        if (writeFile) {
+            configService.writeFile();
+        }
     }
 
     public boolean runJob(Job job) {
@@ -81,9 +142,16 @@ public class JobRunner {
                 log.error("Job {} did not complete successfully", job.getJobDescription());
             }
         } else {
-            SetDelayJob delayJob = (SetDelayJob) job;
-            configService.setDelay(delayJob.getDelay());
-            log.info("Job {} completed successfully", job.getJobDescription());
+            if (job instanceof SetDelayJob) {
+                SetDelayJob delayJob = (SetDelayJob) job;
+                configService.setDelay(delayJob.getDelay());
+                log.info("Job {} completed successfully", job.getJobDescription());
+            } else {
+                UpdateBedtimesJob updateBedtimesJob = (UpdateBedtimesJob) job;
+                configService.getConfig().setBedtimes(updateBedtimesJob.getBedtimes());
+                configService.writeFile();
+                bedtimeService.scheduleToday(updateBedtimesJob.getBedtimes());
+            }
             result = true;
         }
 
