@@ -137,17 +137,13 @@ public class ConfigService {
         }
     }
 
-    public long getDelay() {
+    public long getDelayMillis() {
         return config.getDelay();
     }
 
     public void setDelay(long delayInMillis) {
-        Function<Long, Void> writeDelay = aLong -> {
-            config.setDelay(delayInMillis);
-            return null;
-        };
-
-        runWithDelay("Write Delay Timer " + delayInMillis + "ms", writeDelay, delayInMillis);
+        config.setDelay(delayInMillis);
+        writeFile();
     }
 
     public void writeFile() {
@@ -184,7 +180,7 @@ public class ConfigService {
         };
         Timer timer = new Timer(name);
         log.info("Scheduling task: " + name);
-        timer.schedule(task, getDelay());
+        timer.schedule(task, getDelayMillis());
     }
 
     public Config getConfig() {

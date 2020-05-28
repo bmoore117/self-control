@@ -2,11 +2,13 @@ package com.hyperion.selfcontrol.views.blockadd;
 
 import com.hyperion.selfcontrol.Pair;
 import com.hyperion.selfcontrol.backend.ConfigService;
+import com.hyperion.selfcontrol.backend.JobRunner;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.Website;
+import com.hyperion.selfcontrol.backend.config.job.AddHostJob;
+import com.hyperion.selfcontrol.backend.config.job.RemoveHostJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBlockAddJob;
-import com.hyperion.selfcontrol.backend.jobs.pages.NetNannyProfile;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -28,11 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -45,7 +47,8 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
 
     private static final Logger log = LoggerFactory.getLogger(BlockAddView.class);
 
-    private ConfigService configService;
+    private final ConfigService configService;
+    private final JobRunner jobRunner;
 
     private TextField newAllowed;
     private Grid<Website> allowed;
@@ -54,7 +57,8 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
     private Grid<Website> blocked;
 
     @Autowired
-    public BlockAddView(ConfigService configService) {
+    public BlockAddView(ConfigService configService, JobRunner jobRunner) {
+        this.jobRunner = jobRunner;
         this.configService = configService;
         setId("master-detail-view");
         setSizeFull();
@@ -66,10 +70,9 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         Button addAllowed = new Button("Allow");
         addAllowed.addClickListener(event -> {
             String value = newAllowed.getValue();
-            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                    .map(profile -> NetNannyBlockAddJob.addItem(profile, value, true));
-            Runnable runnable = Utils.composeWithDriver(function);
-            configService.runWithDelay("Allow website: " + value, runnable);
+            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+            AddHostJob job = new AddHostJob(time, "Allow host " + value, value, true);
+            jobRunner.queueJob(job);
             newAllowed.clear();
         });
         addAllowed.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -79,10 +82,9 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         allowed.addColumn(new ComponentRenderer<>(item -> {
             Button remove = new Button("Remove");
             remove.addClickListener(buttonClickEvent -> {
-                Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                        .map(profile -> NetNannyBlockAddJob.removeItem(profile, item.getName(), true)).orElse(false);
-                Supplier<Boolean> supplier = Utils.composeWithDriver(function);
-                if (supplier.get()) {
+                RemoveHostJob job = new RemoveHostJob(null, "Remove allowed host " + item.getName(), item.getName(), true);
+                boolean resultStatus = jobRunner.runJob(job);
+                if (resultStatus) {
                     List<Website> collect = allowed.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
                     collect.remove(item);
                     allowed.setItems(collect);
@@ -104,10 +106,9 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         Button addBlocked = new Button("Block");
         addBlocked.addClickListener(event -> {
             String value = newBlocked.getValue();
-            Function<WebDriver, Boolean> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                    .map(profile -> NetNannyBlockAddJob.addItem(profile, value, false)).orElse(false);
-            Supplier<Boolean> supplier = Utils.composeWithDriver(function);
-            if (supplier.get()) {
+            AddHostJob job = new AddHostJob(null, "Block host " + value, value, false);
+            boolean resultStatus = jobRunner.runJob(job);
+            if (resultStatus) {
                 log.info("Adding item");
                 Set<Website> collect = blocked.getDataProvider().fetch(new Query<>()).collect(Collectors.toSet());
                 collect.add(new Website(value));
@@ -122,10 +123,9 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         blocked.addColumn(new ComponentRenderer<>(item -> {
             Button remove = new Button("Remove");
             remove.addClickListener(buttonClickEvent -> {
-                Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                        .flatMap(NetNannyProfile::clickBlockAdd).ifPresent(netNannyBlockAddPage -> netNannyBlockAddPage.removeItem(item.getName(), false));
-                Runnable withDriver = Utils.composeWithDriver(function);
-                configService.runWithDelay("Remove blocked site: " + item.getName(), withDriver);
+                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+                RemoveHostJob job = new RemoveHostJob(time, "Remove blocked host " + item.getName(), item.getName(), false);
+                jobRunner.queueJob(job);
                 remove.setEnabled(false);
             });
             return remove;

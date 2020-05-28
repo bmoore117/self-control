@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-public class NetNannySetCategoryJob {
+public class NetNannyToggleStatusJob {
 
     private static final Logger log = LoggerFactory.getLogger(NetNannyStatusJob.class);
 
@@ -34,5 +34,10 @@ public class NetNannySetCategoryJob {
                        .map(filtersPage -> filtersPage.findAndDo(configService, filterCategories, true))
                        .orElse(false))
                .orElse(false);
+    }
+
+    public static boolean toggleSafeSearch(WebDriver driver, ConfigService configService, boolean on) {
+        return NetNannyBaseJob.navigateToProfile(driver, configService)
+                .map(profile -> profile.setForceSafeSearch(false, configService)).orElse(false);
     }
 }

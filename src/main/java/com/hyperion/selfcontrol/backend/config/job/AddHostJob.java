@@ -2,7 +2,7 @@ package com.hyperion.selfcontrol.backend.config.job;
 
 import java.time.LocalDateTime;
 
-public class AddHostJob extends Job {
+public class AddHostJob extends OnlineJob {
 
     private String hostToAdd;
     private boolean isAllow;

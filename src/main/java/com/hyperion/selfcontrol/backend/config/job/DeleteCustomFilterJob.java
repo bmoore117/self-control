@@ -4,7 +4,7 @@ import com.hyperion.selfcontrol.backend.CustomFilterCategory;
 
 import java.time.LocalDateTime;
 
-public class DeleteCustomFilterJob extends Job {
+public class DeleteCustomFilterJob extends OnlineJob {
 
     private CustomFilterCategory filterToDelete;
 

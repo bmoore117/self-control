@@ -26,4 +26,16 @@ public class FilterCategory extends AbstractFilterCategory {
                 ", theme='" + theme + '\'' +
                 '}';
     }
+
+    @Override
+    public void setStatus(String status) {
+        if (ALLOW.equalsIgnoreCase(status)) {
+            setThemeAllow();
+        } else if (BLOCK.equalsIgnoreCase(status)) {
+            setThemeBlocked();
+        } else {
+            setThemeError();
+        }
+        this.status = status;
+    }
 }

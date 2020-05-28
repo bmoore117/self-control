@@ -1,10 +1,8 @@
 package com.hyperion.selfcontrol.views.credentials;
 
-import com.hyperion.selfcontrol.backend.BedtimeService;
-import com.hyperion.selfcontrol.backend.ConfigService;
-import com.hyperion.selfcontrol.backend.Credentials;
-import com.hyperion.selfcontrol.backend.Utils;
+import com.hyperion.selfcontrol.backend.*;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
+import com.hyperion.selfcontrol.backend.config.job.SetDelayJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
@@ -54,6 +52,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
 
     private final ConfigService configService;
     private final BedtimeService bedtimeService;
+    private final JobRunner jobRunner;
 
     private final Grid<Credentials> credentials;
     private final Binder<Credentials> binder;
@@ -69,9 +68,10 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
-    public CredentialsView(ConfigService configService, BedtimeService bedtimeService) {
+    public CredentialsView(ConfigService configService, BedtimeService bedtimeService, JobRunner jobRunner) {
         this.configService = configService;
         this.bedtimeService = bedtimeService;
+        this.jobRunner = jobRunner;
         setId("master-detail-view");
         // Configure Grid
         credentials = new Grid<>();
@@ -111,10 +111,16 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveCredentials.setEnabled(configService.isEnabled());
 
         saveDelay.addClickListener(e -> {
-            long delayMs = Long.parseLong(delay.getValue());
-            configService.setDelay(delayMs);
+            long delayMillis = Long.parseLong(delay.getValue());
+            if (delayMillis > configService.getDelayMillis()) {
+                configService.setDelay(delayMillis);
+            } else {
+                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+                SetDelayJob delayJob = new SetDelayJob(time, "Set new delay of " + delayMillis + "ms", delayMillis);
+                jobRunner.queueJob(delayJob);
+            }
         });
-        delay.setValue("" + configService.getDelay());
+        delay.setValue("" + configService.getDelayMillis());
 
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();

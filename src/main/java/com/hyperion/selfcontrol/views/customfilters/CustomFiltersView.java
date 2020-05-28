@@ -1,12 +1,10 @@
 package com.hyperion.selfcontrol.views.customfilters;
 
-import com.hyperion.selfcontrol.backend.ConfigService;
-import com.hyperion.selfcontrol.backend.CustomFilterCategory;
-import com.hyperion.selfcontrol.backend.Keyword;
-import com.hyperion.selfcontrol.backend.Utils;
+import com.hyperion.selfcontrol.backend.*;
+import com.hyperion.selfcontrol.backend.config.job.DeleteCustomFilterJob;
+import com.hyperion.selfcontrol.backend.config.job.ToggleFilterJob;
+import com.hyperion.selfcontrol.backend.config.job.UpdateCustomFilterJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBaseJob;
-import com.hyperion.selfcontrol.backend.jobs.NetNannyCustomFiltersJob;
-import com.hyperion.selfcontrol.backend.jobs.NetNannySetCategoryJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyStatusJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
@@ -31,24 +29,22 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.hyperion.selfcontrol.backend.AbstractFilterCategory.BLOCK;
+import static com.hyperion.selfcontrol.backend.CustomFilterCategory.INACTIVE;
 import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
+import static java.util.Collections.singletonList;
 
 @Route(value = "customfilters", layout = MainView.class)
 @PageTitle("Custom Filters")
@@ -59,6 +55,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     private static final Logger log = LoggerFactory.getLogger(CustomFiltersView.class);
 
     private final ConfigService configService;
+    private final JobRunner jobRunner;
 
     private final Grid<CustomFilterCategory> statuses;
     private final Grid<Keyword> activeFilterKeywords;
@@ -77,7 +74,8 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
     private TextField term;
 
     @Autowired
-    public CustomFiltersView(ConfigService configService) {
+    public CustomFiltersView(ConfigService configService, JobRunner jobRunner) {
+        this.jobRunner = jobRunner;
         this.configService = configService;
         setId("master-detail-view");
 
@@ -138,41 +136,38 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         setActive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
-
-            Function<WebDriver, Optional<List<CustomFilterCategory>>> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                    .flatMap(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CUSTOM_CONTENT_FILTERS,
-                            Collections.singletonList(new CustomFilterCategory(category.getName(), "block"))))
-                    .map(NetNannyStatusJob::getNetNannyCustomStatuses);
-            Supplier<Optional<List<CustomFilterCategory>>> composedFunction = Utils.composeWithDriver(function);
-            composedFunction.get().ifPresent(statuses::setItems);
+            ToggleFilterJob job = new ToggleFilterJob(null, "Toggle custom filter " + category.getName() + ", active",
+                    CUSTOM_CONTENT_FILTERS, singletonList(new CustomFilterCategory(category.getName(), BLOCK)));
+            boolean resultStatus = jobRunner.runJob(job);
+            if (resultStatus) {
+                category.setStatus(BLOCK);
+            }
         });
         setActive.setEnabled(false);
 
         setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
-
-            Consumer<WebDriver> function = driver -> NetNannyBaseJob.navigateToProfile(driver, configService)
-                    .ifPresent(profile -> NetNannySetCategoryJob.setCategories(profile, configService, CUSTOM_CONTENT_FILTERS,
-                            Collections.singletonList(new CustomFilterCategory(category.getName(), "inactive"))));
-            Runnable composedFunction = Utils.composeWithDriver(function);
-            configService.runWithDelay("Set Category Allowed: " + category.getName(), composedFunction);
+            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+            ToggleFilterJob job = new ToggleFilterJob(time, "Toggle custom filter " + category.getName() + ", inactive",
+                    CUSTOM_CONTENT_FILTERS, singletonList(new CustomFilterCategory(category.getName(), INACTIVE)));
+            jobRunner.queueJob(job);
         });
         setInactive.setEnabled(false);
 
         createNew.addClickListener(e -> {
             if (name.getValue() != null && !name.getValue().isEmpty() && !name.getValue().equals("")) {
                 List<CustomFilterCategory> categories = statuses.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
-                categories.add(new CustomFilterCategory(name.getValue(), CustomFilterCategory.INACTIVE, new ArrayList<>()));
+                categories.add(new CustomFilterCategory(name.getValue(), INACTIVE, new ArrayList<>()));
                 statuses.setItems(categories);
             }
         });
 
         delete.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
-            Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.deleteCategory(driver, category, configService);
-            Runnable runnable = Utils.composeWithDriver(function);
-            configService.runWithDelay("Delete Custom Filter Category: " + category.getName(), runnable);
+            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+            DeleteCustomFilterJob job = new DeleteCustomFilterJob(time, "Delete custom filter category " + category.getName(), category);
+            jobRunner.queueJob(job);
         });
         delete.setEnabled(false);
 
@@ -261,13 +256,12 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
             currentActive.setKeywords(updatedList);
 
             if (removed.size() == 0 && added.size() > 0) {
-                Function<WebDriver, Boolean> function = driver -> NetNannyCustomFiltersJob.saveCustomFilter(driver, currentActive, configService);
-                Supplier<Boolean> booleanSupplier = Utils.composeWithDriver(function);
-                booleanSupplier.get();
+                UpdateCustomFilterJob job = new UpdateCustomFilterJob(null, "Add keywords to custom filter " + currentActive.getName(), currentActive);
+                jobRunner.runJob(job);
             } else if (removed.size() > 0) {
-                Consumer<WebDriver> function = driver -> NetNannyCustomFiltersJob.saveCustomFilter(driver, currentActive, configService);
-                Runnable runnable = Utils.composeWithDriver(function);
-                configService.runWithDelay("Save Custom Filter Category: " + currentActive.getName(), runnable);
+                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
+                UpdateCustomFilterJob job = new UpdateCustomFilterJob(time, "Add/remove keywords to custom filter " + currentActive.getName(), currentActive);
+                jobRunner.queueJob(job);
             }
         });
         save.setEnabled(false);
@@ -288,22 +282,9 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
         // Lazy init of the grid items, happens only when we are sure the view will be
         // shown to the user
-
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(
-                    new URL("http://0.0.0.0:4444/wd/hub"),
-                    capabilities);
-
-            doAfterNavigation(driver);
-        } catch (MalformedURLException e) {
-            log.error("Malformed selenium host url", e);
-        } finally {
-            if (driver != null) {
-                driver.close();
-            }
-        }
+        Consumer<WebDriver> driverConsumer = this::doAfterNavigation;
+        Runnable withDriver = Utils.composeWithDriver(driverConsumer);
+        withDriver.run();
     }
 
     public void doAfterNavigation(WebDriver driver) {

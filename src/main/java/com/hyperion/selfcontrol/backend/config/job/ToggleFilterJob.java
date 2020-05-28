@@ -5,7 +5,7 @@ import com.hyperion.selfcontrol.backend.AbstractFilterCategory;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class ToggleFilterJob extends Job {
+public class ToggleFilterJob extends OnlineJob {
 
     private String menuItem;
     private List<AbstractFilterCategory> filterCategories;

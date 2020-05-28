@@ -98,9 +98,10 @@ public class NetNannyProfile {
         }
     }
 
-    public void setForceSafeSearch(boolean enabled, ConfigService configService) {
+    public boolean setForceSafeSearch(boolean enabled, ConfigService configService) {
         if (restrictions.isEmpty()) {
             log.error("Restrictions items not found");
+            return false;
         }
 
         Optional<WebElement> safeSearch = restrictions.stream()
@@ -113,14 +114,19 @@ public class NetNannyProfile {
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
                 configService.getConfig().getState().setForceSafeSearch(true);
                 configService.writeFile();
+                return true;
             } else if (checkBox.isSelected() && !enabled) {
                 log.info("Clicking checkbox off");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
                 configService.getConfig().getState().setForceSafeSearch(false);
                 configService.writeFile();
+                return true;
             }
+
+            log.error("Checkbox not in valid status");
         } else {
             log.error("safe search item not found");
         }
+        return false;
     }
 }

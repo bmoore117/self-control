@@ -42,4 +42,16 @@ public class CustomFilterCategory extends AbstractFilterCategory {
     public void setKeywords(List<Keyword> keywords) {
         this.keywords = keywords;
     }
+
+    @Override
+    public void setStatus(String status) {
+        if (INACTIVE.equals(status.toLowerCase())) {
+            theme = "badge";
+        } else if ("block".equals(status.toLowerCase())) {
+            theme = "badge success";
+        } else {
+            theme = "badge error";
+        }
+        this.status = status;
+    }
 }
