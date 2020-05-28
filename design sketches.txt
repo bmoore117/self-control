@@ -41,3 +41,15 @@ Seemingly not scriptable through powershell directly, only editable through sece
 https://stackoverflow.com/questions/23260656/modify-local-security-policy-using-powershell
 
 Design for the rest of browsers will be to update NN to have a custom filter to screen them
+
+-----
+
+Full product idea:
+* include local security policy editing, on delay
+* include internet filter change testing before locking it behind delay
+* roll our own masheen learning
+* streak calendar
+* windows notifications via powershell
+* chatbot UI, using graphbot
+
+Take all this together, sell as a product
