@@ -1,6 +1,9 @@
 package com.hyperion.selfcontrol.views.credentials;
 
-import com.hyperion.selfcontrol.backend.*;
+import com.hyperion.selfcontrol.backend.ConfigService;
+import com.hyperion.selfcontrol.backend.Credentials;
+import com.hyperion.selfcontrol.backend.JobRunner;
+import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.backend.config.job.SetDelayJob;
 import com.hyperion.selfcontrol.backend.config.job.UpdateBedtimesJob;
@@ -52,7 +55,6 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
 
     private final ConfigService configService;
-    private final BedtimeService bedtimeService;
     private final JobRunner jobRunner;
 
     private final Grid<Credentials> credentials;
@@ -69,9 +71,8 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
-    public CredentialsView(ConfigService configService, BedtimeService bedtimeService, JobRunner jobRunner) {
+    public CredentialsView(ConfigService configService, JobRunner jobRunner) {
         this.configService = configService;
-        this.bedtimeService = bedtimeService;
         this.jobRunner = jobRunner;
         setId("master-detail-view");
         // Configure Grid
