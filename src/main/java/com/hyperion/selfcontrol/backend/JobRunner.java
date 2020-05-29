@@ -11,9 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -25,28 +28,73 @@ public class JobRunner {
     private final ConfigService configService;
     private final BedtimeService bedtimeService;
 
+    private static List<CustomTimerTask> tasks = new LinkedList<>();
+
     @Autowired
     public JobRunner(ConfigService configService, BedtimeService bedtimeService) {
         this.configService = configService;
         this.bedtimeService = bedtimeService;
     }
 
+    class CustomTimerTask extends TimerTask {
+
+        private final LocalDateTime runAt;
+        private final String jobDescription;
+
+        public CustomTimerTask(LocalDateTime runAt, String jobDescription) {
+            this.runAt = runAt;
+            this.jobDescription = jobDescription;
+        }
+
+        public LocalDateTime getRunAt() {
+            return runAt;
+        }
+
+        public String getJobDescription() {
+            return jobDescription;
+        }
+
+        @Override
+        public void run() {
+            // this is added so we don't block the Timer thread, since runReadyJobs may take a while to complete and
+            // is synchronized
+            CompletableFuture.runAsync(() -> {
+                runReadyJobs();
+                tasks.remove(this);
+            });
+        }
+    }
+
+    public void onWake() {
+        log.info("Adjusting job timers in onWake");
+        List<CustomTimerTask> remainingTasks = new LinkedList<>();
+        for (CustomTimerTask task : tasks) {
+            task.cancel(); // all existing timers are invalid, time has shifted under them by however much we slept for
+            if (!task.getRunAt().isAfter(LocalDateTime.now())) {
+                CustomTimerTask newTask = new CustomTimerTask(task.getRunAt(), task.getJobDescription());
+                remainingTasks.add(newTask);
+                long epochMilli = task.getRunAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                long timerDuration = epochMilli - System.currentTimeMillis();
+                Timer timer = new Timer(task.getJobDescription());
+                timer.schedule(newTask, timerDuration);
+            }
+        }
+        tasks = remainingTasks;
+        runReadyJobs();
+    }
+
     public boolean queueJob(Job job) {
         log.info("Scheduling job: {}", job.getJobDescription());
         configService.getConfig().getPendingJobs().add(job);
         configService.writeFile();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                runReadyJobs();
-            }
-        };
+        CustomTimerTask task = new CustomTimerTask(job.getJobLaunchTime(), job.getJobDescription());
         Timer timer = new Timer(job.getJobDescription());
         timer.schedule(task, configService.getDelayMillis());
+        tasks.add(task);
         return true;
     }
 
-    public void runReadyJobs() {
+    public synchronized void runReadyJobs() {
         retryFailedJobsInternal(false);
 
         List<Job> jobs = configService.getConfig().getPendingJobs().stream()
