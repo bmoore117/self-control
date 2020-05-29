@@ -83,7 +83,7 @@ public class JobRunner {
         runReadyJobs();
     }
 
-    public boolean queueJob(Job job) {
+    public void queueJob(Job job) {
         log.info("Scheduling job: {}", job.getJobDescription());
         configService.getConfig().getPendingJobs().add(job);
         configService.writeFile();
@@ -91,7 +91,6 @@ public class JobRunner {
         Timer timer = new Timer(job.getJobDescription());
         timer.schedule(task, configService.getDelayMillis());
         tasks.add(task);
-        return true;
     }
 
     /*
