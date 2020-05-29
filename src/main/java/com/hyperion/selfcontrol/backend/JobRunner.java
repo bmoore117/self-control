@@ -94,6 +94,11 @@ public class JobRunner {
         return true;
     }
 
+    /*
+        Of note, if other jobs become ready while the current set of ready jobs is still running, we expect to still
+        catch it because of the fact that there will be blocking threads calling this method waiting in line for their
+        turn to run it, due to the job-timer association
+     */
     public synchronized void runReadyJobs() {
         retryFailedJobsInternal(false);
 
