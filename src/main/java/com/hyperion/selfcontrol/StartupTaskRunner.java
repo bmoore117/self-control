@@ -54,6 +54,14 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking toggleInternet from classpath", e);
         }
 
+        log.info("Unpacking ping script");
+        resource = new ClassPathResource("ping.ps1");
+        try (InputStream inputStream = resource.getInputStream()) {
+            Files.copy(inputStream, Paths.get("ping.ps1"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error unpacking ping from classpath", e);
+        }
+
         // todo should these be in jobrunner?
         configService.resetHallPassForTheWeek();
         bedtimeService.scheduleToday(configService.getConfig().getBedtimes());
