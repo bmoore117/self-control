@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.CompletableFuture;
 
 
 @Component
@@ -53,8 +54,10 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking toggleInternet from classpath", e);
         }
 
+        // todo should these be in jobrunner?
         configService.resetHallPassForTheWeek();
         bedtimeService.scheduleToday(configService.getConfig().getBedtimes());
-        jobRunner.runReadyJobs();
+        // todo is this needed if we have ping controller? It would seem safe enough to just wrap in a runAsync but is it really needed?
+        CompletableFuture.runAsync(jobRunner::runReadyJobs);
     }
 }
