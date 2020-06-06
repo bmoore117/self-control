@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -66,7 +67,7 @@ public class Utils {
         };
     }
 
-    public static int changePassword(String newPassword) {
+    public static int changeLocalAdminPassword(String newPassword) {
         if (!Files.exists(Paths.get("changePassword.ps1"))) {
             log.warn("Password script not found, unpacking again");
             Resource resource = new ClassPathResource("changePassword.ps1");
@@ -104,6 +105,18 @@ public class Utils {
         }
 
         return -1;
+    }
+
+    public static String generatePassword() {
+        int leftLimit = 33; // numeral '0'
+        int rightLimit = 126; // character '~'
+        int targetStringLength = 12;
+        Random random = new Random();
+
+        return random.ints(leftLimit, rightLimit + 1)
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 
     public static void toggleInternet(boolean on) {

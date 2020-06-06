@@ -91,8 +91,9 @@ public class ConfigService {
         log.info("isWeekend: {}", isWeekend);
         log.info("afterFiveOnFriday: {}", afterFiveOnFriday);
         if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
-            log.info("Resetting hall pass for the week");
+            log.info("Resetting hall pass & admin password for the week");
             config.setHallPassUsed(false);
+            Utils.changeLocalAdminPassword(Utils.generatePassword());
             writeFile();
         }
     }

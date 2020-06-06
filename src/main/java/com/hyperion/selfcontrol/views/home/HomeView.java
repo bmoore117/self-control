@@ -45,6 +45,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 
+import static com.hyperion.selfcontrol.backend.Utils.generatePassword;
 import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
 
 @Route(value = "home", layout = MainView.class)
@@ -213,7 +214,7 @@ public class HomeView extends Div implements AfterNavigationObserver {
         passwordLabel.getStyle().set("text-align", "right");
         generate.addClickListener(buttonClickEvent -> {
             String password = generatePassword();
-            int status = Utils.changePassword(password);
+            int status = Utils.changeLocalAdminPassword(password);
             if (status == 0) {
                 credentials.getDataProvider().fetch(new Query<>())
                         .filter(credentials -> credentials.getTag().contains("local"))
@@ -260,7 +261,7 @@ public class HomeView extends Div implements AfterNavigationObserver {
         Label statusLabel = new Label("Operation status will show here");
         statusLabel.getStyle().set("text-align", "right");
         activate.addClickListener(buttonClickEvent -> {
-            int status = Utils.changePassword(ConfigService.STOCK_PASSWORD);
+            int status = Utils.changeLocalAdminPassword(ConfigService.STOCK_PASSWORD);
             if (status == 0) {
                 configService.getCredentials().stream()
                         .filter(credentials -> credentials.getTag().contains("local"))
@@ -425,18 +426,6 @@ public class HomeView extends Div implements AfterNavigationObserver {
         formLayout.addFormItem(field, fieldName);
         wrapper.add(formLayout);
         field.getElement().getClassList().add("full-width");
-    }
-
-    private String generatePassword() {
-        int leftLimit = 33; // numeral '0'
-        int rightLimit = 126; // character '~'
-        int targetStringLength = 12;
-        Random random = new Random();
-
-        return random.ints(leftLimit, rightLimit + 1)
-                .limit(targetStringLength)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
     }
 
     @Override
