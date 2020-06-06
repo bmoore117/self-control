@@ -6,18 +6,20 @@ import java.time.LocalDateTime;
 
 public class UpdateCustomFilterJob extends OnlineJob {
 
-    private CustomFilterCategory customFilterCategory;
+    private static final String CUSTOM_FILTER_CATEGORY = "customFilterCategory";
+
+    public UpdateCustomFilterJob() {}
 
     public UpdateCustomFilterJob(LocalDateTime jobLaunchTime, String jobDescription, CustomFilterCategory customFilterCategory) {
         super(jobLaunchTime, jobDescription);
-        this.customFilterCategory = customFilterCategory;
+        data.put(CUSTOM_FILTER_CATEGORY, customFilterCategory);
     }
 
     public CustomFilterCategory getCustomFilterCategory() {
-        return customFilterCategory;
+        return get(CUSTOM_FILTER_CATEGORY, CustomFilterCategory.class);
     }
 
     public void setCustomFilterCategory(CustomFilterCategory customFilterCategory) {
-        this.customFilterCategory = customFilterCategory;
+        data.put(CUSTOM_FILTER_CATEGORY, customFilterCategory);
     }
 }

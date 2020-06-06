@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.LinkedList;
@@ -70,12 +72,13 @@ public class JobRunner {
         List<CustomTimerTask> remainingTasks = new LinkedList<>();
         for (CustomTimerTask task : tasks) {
             task.cancel(); // all existing timers are invalid, time has shifted under them by however much we slept for
-            if (!task.getRunAt().isAfter(LocalDateTime.now())) {
+            if (task.getRunAt().isAfter(LocalDateTime.now())) {
                 CustomTimerTask newTask = new CustomTimerTask(task.getRunAt(), task.getJobDescription());
                 remainingTasks.add(newTask);
                 long epochMilli = task.getRunAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
                 long timerDuration = epochMilli - System.currentTimeMillis();
                 Timer timer = new Timer(task.getJobDescription());
+                log.info("Task {} scheduled to be run at {}, rescheduling with timer of {}ms", task.getJobDescription(), task.getRunAt(), timerDuration);
                 timer.schedule(newTask, timerDuration);
             }
         }
@@ -84,13 +87,28 @@ public class JobRunner {
     }
 
     public void queueJob(Job job) {
+        queueJobInternal(job, true);
+    }
+
+    private void queueJobInternal(Job job, boolean writeFile) {
         log.info("Scheduling job: {}", job.getJobDescription());
-        configService.getConfig().getPendingJobs().add(job);
-        configService.writeFile();
+        configService.getConfig().getPendingJobs().add(job.dehydrateJob());
+        if (writeFile) {
+            configService.writeFile();
+        }
         CustomTimerTask task = new CustomTimerTask(job.getJobLaunchTime(), job.getJobDescription());
         Timer timer = new Timer(job.getJobDescription());
-        timer.schedule(task, configService.getDelayMillis());
+        long epochMilli = task.getRunAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long timerDuration = epochMilli - System.currentTimeMillis();
+        timer.schedule(task, timerDuration);
         tasks.add(task);
+    }
+
+    public void requeuePendingJobs() {
+        for (Job job : configService.getConfig().getPendingJobs()) {
+            queueJobInternal(job, false);
+        }
+        runReadyJobs();
     }
 
     /*
@@ -106,22 +124,18 @@ public class JobRunner {
                 .collect(Collectors.toList());
 
         for (Job job : jobs) {
-            RuntimeException e = null;
-            boolean result = true;
+            RuntimeException e;
             try {
-                result = runJob(job);
+                runJob(job);
             } catch (RuntimeException ex) {
                 e = ex;
-                log.error("Error running job, moving to manual retry queue", ex);
-                configService.getConfig().getRetryJobs().add(job);
+                if (!configService.getConfig().getRetryJobs().contains(job)) {
+                    log.error("Job " + job.getJobDescription() + " did not return success, moving to retry queue", e);
+                    configService.getConfig().getRetryJobs().add(job);
+                }
             }
 
-            if (e == null && result) {
-                configService.getConfig().getPendingJobs().remove(job);
-            } else if (!result) {
-                log.error("Job {} did not return success, moving to retry queue", job.getJobDescription());
-                configService.getConfig().getRetryJobs().add(job);
-            }
+            configService.getConfig().getPendingJobs().remove(job);
         }
 
         configService.writeFile();
@@ -145,14 +159,12 @@ public class JobRunner {
                 result = runJob(job);
             } catch (RuntimeException ex) {
                 e = ex;
-                log.error("Retry of job failed, leaving in retry queue");
+                log.error("Retry of job failed, leaving in retry queue", e);
             }
 
             if (e == null && result) {
                 log.info("Job succeeded, removing from queue");
                 configService.getConfig().getRetryJobs().remove(job);
-            } else if (!result) {
-                log.error("Retry of job {} did not return success, leaving in retry queue", job.getJobDescription());
             }
         }
 
@@ -161,9 +173,35 @@ public class JobRunner {
         }
     }
 
-    public boolean runJob(Job job) {
-        log.info("Starting job {}", job.getJobDescription());
+    public static Job convertIfNecessary(Job incoming) {
+        if (incoming == null) {
+            return null;
+        }
+
+        if (incoming.getClass().equals(Job.class)) {
+            // if this is the case then this class has been rehydrated from concentrate, and needs to be cast
+            try {
+                Constructor<? extends Job> constructor = incoming.getConcreteClass().getConstructor();
+                Job job = constructor.newInstance();
+                job.setJobDescription(incoming.getJobDescription());
+                job.setJobLaunchTime(incoming.getJobLaunchTime());
+                job.setId(incoming.getId());
+                job.setConcreteClass(incoming.getConcreteClass());
+                job.setData(incoming.getData());
+                return job;
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                log.error("This should not have happened, does your job class follow the established pattern?", e);
+                return null;
+            }
+        } else {
+            return incoming;
+        }
+    }
+
+    public boolean runJob(Job incoming) {
+        log.info("Starting job {}", incoming.getJobDescription());
         Boolean result;
+        Job job = convertIfNecessary(incoming);
         if (job instanceof OnlineJob) {
             Function<WebDriver, Boolean> function;
             if (job instanceof AddHostJob) {

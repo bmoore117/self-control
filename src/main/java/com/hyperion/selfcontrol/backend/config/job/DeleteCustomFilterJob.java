@@ -6,20 +6,20 @@ import java.time.LocalDateTime;
 
 public class DeleteCustomFilterJob extends OnlineJob {
 
-    private CustomFilterCategory filterToDelete;
+    private static final String FILTER_TO_DELETE = "filterToDelete";
 
     public DeleteCustomFilterJob() {}
 
     public DeleteCustomFilterJob(LocalDateTime jobLaunchTime, String jobDescription, CustomFilterCategory filterToDelete) {
         super(jobLaunchTime, jobDescription);
-        this.filterToDelete = filterToDelete;
+        data.put(FILTER_TO_DELETE, filterToDelete);
     }
 
     public CustomFilterCategory getFilterToDelete() {
-        return filterToDelete;
+        return get(FILTER_TO_DELETE, CustomFilterCategory.class);
     }
 
     public void setFilterToDelete(CustomFilterCategory filterToDelete) {
-        this.filterToDelete = filterToDelete;
+        data.put(FILTER_TO_DELETE, filterToDelete);
     }
 }

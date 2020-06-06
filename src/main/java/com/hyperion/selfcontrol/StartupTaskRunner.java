@@ -66,6 +66,6 @@ public class StartupTaskRunner implements ApplicationRunner {
         configService.resetHallPassForTheWeek();
         bedtimeService.scheduleToday(configService.getConfig().getBedtimes());
         // todo is this needed if we have ping controller? It would seem safe enough to just wrap in a runAsync but is it really needed?
-        CompletableFuture.runAsync(jobRunner::runReadyJobs);
+        CompletableFuture.runAsync(jobRunner::requeuePendingJobs);
     }
 }

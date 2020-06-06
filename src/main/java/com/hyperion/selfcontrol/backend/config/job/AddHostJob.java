@@ -4,31 +4,31 @@ import java.time.LocalDateTime;
 
 public class AddHostJob extends OnlineJob {
 
-    private String hostToAdd;
-    private boolean isAllow;
+    private static final String HOST_TO_ADD = "hostToAdd";
+    private static final String IS_ALLOW = "isAllow";
 
     public AddHostJob() {}
 
     public AddHostJob(LocalDateTime jobLaunchTime, String description, String hostToAdd, boolean isAllow) {
         super(jobLaunchTime, description);
-        this.hostToAdd = hostToAdd;
-        this.isAllow = isAllow;
+        data.put(HOST_TO_ADD, hostToAdd);
+        data.put(IS_ALLOW, isAllow);
     }
 
     public String getHostToAdd() {
-        return hostToAdd;
+        return get(HOST_TO_ADD, String.class);
     }
 
     public void setHostToAdd(String hostToAdd) {
-        this.hostToAdd = hostToAdd;
+        data.put(HOST_TO_ADD, hostToAdd);
     }
 
-    public boolean isAllow() {
-        return isAllow;
+    public Boolean isAllow() {
+        return get(IS_ALLOW, Boolean.class);
     }
 
     public void setAllow(boolean allow) {
-        isAllow = allow;
+        data.put(IS_ALLOW, allow);
     }
 }
 

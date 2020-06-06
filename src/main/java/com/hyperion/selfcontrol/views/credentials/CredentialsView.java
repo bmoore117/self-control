@@ -45,6 +45,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 
+import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
+
 @Route(value = "credentials", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
 @PageTitle("Credentials")
@@ -117,8 +119,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
             if (delayMillis > configService.getDelayMillis()) {
                 configService.setDelay(delayMillis);
             } else {
-                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-                SetDelayJob delayJob = new SetDelayJob(time, "Set new delay of " + delayMillis + "ms", delayMillis);
+                SetDelayJob delayJob = new SetDelayJob(getCurrentTimePlusDelay(configService), "Set new delay of " + delayMillis + "ms", delayMillis);
                 jobRunner.queueJob(delayJob);
             }
         });
@@ -361,8 +362,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> {
             Bedtimes bedtimes = bedtimesBinder.getBean();
-            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-            UpdateBedtimesJob bedtimesJob = new UpdateBedtimesJob(time, "Update bedtimes job", bedtimes);
+            UpdateBedtimesJob bedtimesJob = new UpdateBedtimesJob(getCurrentTimePlusDelay(configService), "Update bedtimes job", bedtimes);
             jobRunner.queueJob(bedtimesJob);
         });
         buttonLayout.add(saveButton);

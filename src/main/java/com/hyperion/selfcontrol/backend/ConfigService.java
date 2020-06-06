@@ -29,11 +29,14 @@ public class ConfigService {
     public static final String STOCK_PASSWORD = "P@ssw0rd";
 
     private Config config;
-    private final ObjectMapper mapper;
+    public static final ObjectMapper mapper;
 
-    public ConfigService() throws IOException {
+    static {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+    }
+
+    public ConfigService() throws IOException {
         refreshFile();
     }
 

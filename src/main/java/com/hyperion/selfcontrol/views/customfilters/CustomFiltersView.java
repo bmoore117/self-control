@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +42,7 @@ import java.util.stream.Collectors;
 
 import static com.hyperion.selfcontrol.backend.AbstractFilterCategory.BLOCK;
 import static com.hyperion.selfcontrol.backend.CustomFilterCategory.INACTIVE;
+import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
 import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
 import static java.util.Collections.singletonList;
 
@@ -148,8 +148,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
         setInactive.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
-            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-            ToggleFilterJob job = new ToggleFilterJob(time, "Toggle custom filter " + category.getName() + ", inactive",
+            ToggleFilterJob job = new ToggleFilterJob(getCurrentTimePlusDelay(configService), "Toggle custom filter " + category.getName() + ", inactive",
                     CUSTOM_CONTENT_FILTERS, singletonList(new CustomFilterCategory(category.getName(), INACTIVE)));
             jobRunner.queueJob(job);
         });
@@ -165,8 +164,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
 
         delete.addClickListener(e -> {
             CustomFilterCategory category = statuses.asSingleSelect().getValue();
-            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-            DeleteCustomFilterJob job = new DeleteCustomFilterJob(time, "Delete custom filter category " + category.getName(), category);
+            DeleteCustomFilterJob job = new DeleteCustomFilterJob(getCurrentTimePlusDelay(configService), "Delete custom filter category " + category.getName(), category);
             jobRunner.queueJob(job);
         });
         delete.setEnabled(false);
@@ -259,8 +257,7 @@ public class CustomFiltersView extends Div implements AfterNavigationObserver {
                 UpdateCustomFilterJob job = new UpdateCustomFilterJob(null, "Add keywords to custom filter " + currentActive.getName(), currentActive);
                 jobRunner.runJob(job);
             } else if (removed.size() > 0) {
-                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-                UpdateCustomFilterJob job = new UpdateCustomFilterJob(time, "Add/remove keywords to custom filter " + currentActive.getName(), currentActive);
+                UpdateCustomFilterJob job = new UpdateCustomFilterJob(getCurrentTimePlusDelay(configService), "Add/remove keywords to custom filter " + currentActive.getName(), currentActive);
                 jobRunner.queueJob(job);
             }
         });

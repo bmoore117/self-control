@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +37,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
 
 @Route(value = "blockadd", layout = MainView.class)
 @PageTitle("Block/Add")
@@ -70,8 +71,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         Button addAllowed = new Button("Allow");
         addAllowed.addClickListener(event -> {
             String value = newAllowed.getValue();
-            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-            AddHostJob job = new AddHostJob(time, "Allow host " + value, value, true);
+            AddHostJob job = new AddHostJob(getCurrentTimePlusDelay(configService), "Allow host " + value, value, true);
             jobRunner.queueJob(job);
             newAllowed.clear();
         });
@@ -123,8 +123,7 @@ public class BlockAddView extends Div implements AfterNavigationObserver {
         blocked.addColumn(new ComponentRenderer<>(item -> {
             Button remove = new Button("Remove");
             remove.addClickListener(buttonClickEvent -> {
-                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-                RemoveHostJob job = new RemoveHostJob(time, "Remove blocked host " + item.getName(), item.getName(), false);
+                RemoveHostJob job = new RemoveHostJob(getCurrentTimePlusDelay(configService), "Remove blocked host " + item.getName(), item.getName(), false);
                 jobRunner.queueJob(job);
                 remove.setEnabled(false);
             });

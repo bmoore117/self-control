@@ -4,21 +4,26 @@ import java.time.LocalDateTime;
 
 public class SetDelayJob extends OfflineJob {
 
-    private long delay;
+    private static final String DELAY = "delay";
 
     public SetDelayJob() {
     }
 
     public SetDelayJob(LocalDateTime jobLaunchTime, String jobDescription, long delay) {
         super(jobLaunchTime, jobDescription);
-        this.delay = delay;
+        data.put("delay", delay);
     }
 
-    public long getDelay() {
-        return delay;
+    public Long getDelay() {
+        Object o = data.get(DELAY);
+        if (o instanceof Integer) {
+            return ((Integer) o).longValue();
+        } else {
+            return (Long) o;
+        }
     }
 
-    public void setDelay(long delay) {
-        this.delay = delay;
+    public void setDelay(Long delay) {
+        data.put(DELAY, delay);
     }
 }

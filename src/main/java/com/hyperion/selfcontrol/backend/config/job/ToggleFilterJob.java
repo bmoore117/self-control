@@ -7,30 +7,31 @@ import java.util.List;
 
 public class ToggleFilterJob extends OnlineJob {
 
-    private String menuItem;
+    private static final String MENU_ITEM = "menuItem";
+    private static final String FILTER_CATEGORIES = "filterCategories";
     private List<AbstractFilterCategory> filterCategories;
 
     public ToggleFilterJob() {}
 
     public ToggleFilterJob(LocalDateTime jobLaunchTime, String jobDescription, String menuItem, List<AbstractFilterCategory> filterCategories) {
         super(jobLaunchTime, jobDescription);
-        this.menuItem = menuItem;
-        this.filterCategories = filterCategories;
+        data.put(MENU_ITEM, menuItem);
+        data.put(FILTER_CATEGORIES, filterCategories);
     }
 
     public String getMenuItem() {
-        return menuItem;
+        return get(MENU_ITEM, String.class);
     }
 
     public void setMenuItem(String menuItem) {
-        this.menuItem = menuItem;
+        data.put(MENU_ITEM, menuItem);
     }
 
     public List<AbstractFilterCategory> getFilterCategories() {
-        return filterCategories;
+        return get(FILTER_CATEGORIES, List.class);
     }
 
     public void setFilterCategories(List<AbstractFilterCategory> filterCategories) {
-        this.filterCategories = filterCategories;
+        data.put(FILTER_CATEGORIES, filterCategories);
     }
 }

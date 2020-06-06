@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 
 import static com.helger.css.propertyvalue.CCSSValue.BLOCK;
 import static com.hyperion.selfcontrol.backend.AbstractFilterCategory.ALLOW;
+import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
 import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CONTENT_FILTERS;
 
 @Route(value = "filters", layout = MainView.class)
@@ -96,8 +97,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
         setAllowed.addClickListener(e -> {
             FilterCategory category = statuses.asSingleSelect().getValue();
             statuses.asSingleSelect().clear();
-            LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-            ToggleFilterJob job = new ToggleFilterJob(time, "Toggle filter " + category.getName() + ", allowed",
+            ToggleFilterJob job = new ToggleFilterJob(getCurrentTimePlusDelay(configService), "Toggle filter " + category.getName() + ", allowed",
                     CONTENT_FILTERS, Collections.singletonList(new FilterCategory(category.getName(), ALLOW)));
             jobRunner.queueJob(job);
         });
@@ -118,8 +118,7 @@ public class FiltersView extends Div implements AfterNavigationObserver {
             // value here is new value, not old value - it is the value after clicking
             if (!checkbox.getValue()) {
                 // disable on delay
-                LocalDateTime time = LocalDateTime.now().plusNanos(configService.getDelayMillis() * 1000);
-                ToggleSafeSearchJob job = new ToggleSafeSearchJob(time, "Toggle safesearch off", false);
+                ToggleSafeSearchJob job = new ToggleSafeSearchJob(getCurrentTimePlusDelay(configService), "Toggle safesearch off", false);
                 jobRunner.queueJob(job);
             } else {
                 // if safe search not currently enabled, run immediately and enable

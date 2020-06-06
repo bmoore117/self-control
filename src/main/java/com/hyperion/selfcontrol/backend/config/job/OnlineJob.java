@@ -4,5 +4,7 @@ import java.time.LocalDateTime;
 
 public abstract class OnlineJob extends Job {
     public OnlineJob() {}
-    public OnlineJob(LocalDateTime jobLaunchTime, String description) {}
+    public OnlineJob(LocalDateTime jobLaunchTime, String description) {
+        super(jobLaunchTime, description);
+    }
 }

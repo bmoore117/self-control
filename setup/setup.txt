@@ -11,3 +11,6 @@ Start -> Local Security Policy -> Software Restriction Policies -> Right click a
 select C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
 
 This should be good enough, as edge lives in program files and can't be modified by you while adminless
+
+Task Scheduler -> Run as admin -> New Task (not new basic task) -> triggers -> on unlock of any user -> actions -> run
+ping.ps1 from app-extracted directory of ben-local -> conditions -> run even when on battery.

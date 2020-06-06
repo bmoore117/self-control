@@ -4,21 +4,21 @@ import java.time.LocalDateTime;
 
 public class ToggleSafeSearchJob extends OnlineJob {
 
-    private boolean on;
+    private static final String ON = "on";
 
     public ToggleSafeSearchJob() {
     }
 
     public ToggleSafeSearchJob(LocalDateTime jobLaunchTime, String description, boolean on) {
         super(jobLaunchTime, description);
-        this.on = on;
+        data.put(ON, on);
     }
 
-    public boolean isOn() {
-        return on;
+    public Boolean isOn() {
+        return get(ON, Boolean.class);
     }
 
     public void setOn(boolean on) {
-        this.on = on;
+        data.put(ON, on);
     }
 }

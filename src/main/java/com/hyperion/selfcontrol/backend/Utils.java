@@ -14,6 +14,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -21,6 +22,8 @@ import java.util.function.Supplier;
 public class Utils {
 
     private static final Logger log = LoggerFactory.getLogger(Utils.class);
+
+    public static final int MILLISECONDS_TO_NANOSECONDS = 1000000;
 
     public static <R> Supplier<R> composeWithDriver(Function<WebDriver, R> function) {
         return () -> {
@@ -130,5 +133,9 @@ public class Utils {
         } catch (IOException | InterruptedException e) {
             log.error("Error running toggleInternet, with arg: " + on, e);
         }
+    }
+
+    public static LocalDateTime getCurrentTimePlusDelay(ConfigService configService) {
+        return LocalDateTime.now().plusNanos(configService.getDelayMillis() * MILLISECONDS_TO_NANOSECONDS);
     }
 }
