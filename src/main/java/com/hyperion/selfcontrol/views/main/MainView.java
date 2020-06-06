@@ -1,17 +1,14 @@
 package com.hyperion.selfcontrol.views.main;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import com.hyperion.selfcontrol.views.blockadd.BlockAddView;
-import com.hyperion.selfcontrol.views.credentials.CredentialsView;
 import com.hyperion.selfcontrol.views.customfilters.CustomFiltersView;
+import com.hyperion.selfcontrol.views.filters.FiltersView;
+import com.hyperion.selfcontrol.views.home.HomeView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -19,9 +16,12 @@ import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.RouteConfiguration;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.PWA;
-import com.vaadin.flow.theme.Theme;import com.vaadin.flow.theme.lumo.Lumo;
+import com.vaadin.flow.theme.Theme;
+import com.vaadin.flow.theme.lumo.Lumo;
 
-import com.hyperion.selfcontrol.views.filters.FiltersView;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -54,7 +54,7 @@ public class MainView extends AppLayout {
         final List<Tab> tabs = new ArrayList<>();
         tabs.add(createTab("Filters", FiltersView.class));
         tabs.add(createTab("Custom Filters", CustomFiltersView.class));
-        tabs.add(createTab("Credentials", CredentialsView.class));
+        tabs.add(createTab("Home", HomeView.class));
         tabs.add(createTab("Block/Add", BlockAddView.class));
         return tabs.toArray(new Tab[tabs.size()]);
     }

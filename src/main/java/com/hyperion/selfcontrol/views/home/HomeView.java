@@ -1,4 +1,4 @@
-package com.hyperion.selfcontrol.views.credentials;
+package com.hyperion.selfcontrol.views.home;
 
 import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.Credentials;
@@ -47,14 +47,14 @@ import java.util.*;
 
 import static com.hyperion.selfcontrol.backend.Utils.getCurrentTimePlusDelay;
 
-@Route(value = "credentials", layout = MainView.class)
+@Route(value = "home", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
-@PageTitle("Credentials")
-@CssImport(value = "styles/views/credentials/credentials-view.css", include = "lumo-badge")
+@PageTitle("Home")
+@CssImport(value = "styles/views/home/home-view.css", include = "lumo-badge")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
-public class CredentialsView extends Div implements AfterNavigationObserver {
+public class HomeView extends Div implements AfterNavigationObserver {
 
-    private static final Logger log = LoggerFactory.getLogger(CredentialsView.class);
+    private static final Logger log = LoggerFactory.getLogger(HomeView.class);
 
     private final ConfigService configService;
     private final JobRunner jobRunner;
@@ -73,7 +73,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
     private final Binder<Bedtimes> bedtimesBinder;
 
     @Autowired
-    public CredentialsView(ConfigService configService, JobRunner jobRunner) {
+    public HomeView(ConfigService configService, JobRunner jobRunner) {
         this.configService = configService;
         this.jobRunner = jobRunner;
         setId("master-detail-view");
