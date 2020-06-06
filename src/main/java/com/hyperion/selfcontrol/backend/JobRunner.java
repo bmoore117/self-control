@@ -14,10 +14,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -135,6 +132,7 @@ public class JobRunner {
                 }
             }
 
+            // this is safe despite being in a for loop because it's not the collection we are iterating over
             configService.getConfig().getPendingJobs().remove(job);
         }
 
@@ -151,7 +149,9 @@ public class JobRunner {
     }
 
     private void retryFailedJobsInternal(boolean writeFile) {
-        for (Job job : configService.getConfig().getRetryJobs()) {
+        Iterator<Job> it = configService.getConfig().getRetryJobs().iterator();
+        while (it.hasNext()) {
+            Job job = it.next();
             log.info("Retrying previously errored job {}", job.getJobDescription());
             RuntimeException e = null;
             boolean result = true;
@@ -164,7 +164,7 @@ public class JobRunner {
 
             if (e == null && result) {
                 log.info("Job succeeded, removing from queue");
-                configService.getConfig().getRetryJobs().remove(job);
+                it.remove();
             }
         }
 
