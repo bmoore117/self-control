@@ -148,6 +148,17 @@ public class JobRunner {
         configService.writeFile();
     }
 
+    public void cancelPendingJobs() {
+        Iterator<CustomTimerTask> it = tasks.iterator();
+        while (it.hasNext()) {
+            CustomTimerTask task = it.next();
+            task.cancel();
+            it.remove();
+        }
+        configService.getConfig().getPendingJobs().clear();
+        configService.writeFile();
+    }
+
     private void retryFailedJobsInternal(boolean writeFile) {
         Iterator<Job> it = configService.getConfig().getRetryJobs().iterator();
         while (it.hasNext()) {

@@ -173,8 +173,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         Hr hr3 = new Hr();
         editorDiv.add(hr3);
         createWeekendHallPassLayout(editorDiv);
+        Hr hr4 = new Hr();
+        editorDiv.add(hr4);
         createRetryLayout(editorDiv);
-        createDeleteLayout(editorDiv);
 
         splitLayout.addToSecondary(editorDiv);
     }
@@ -207,6 +208,7 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.getStyle().set("padding-right", "0");
         Button generate = new Button("Change Admin Password");
         generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generate.setWidthFull();
         Label passwordLabel = new Label("Operation status will show here");
         passwordLabel.getStyle().set("text-align", "right");
         generate.addClickListener(buttonClickEvent -> {
@@ -239,9 +241,9 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         buttonLayout.setWidthFull();
         buttonLayout.setSpacing(true);
         buttonLayout.getStyle().set("padding-right", "0");
-        Button generate = new Button("Activate Weekend Hall Pass");
-        generate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
+        Button activate = new Button("Activate Weekend Hall Pass");
+        activate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        activate.setWidthFull();
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
                 .contains(now.getDayOfWeek());
@@ -250,14 +252,14 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
         boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
 
         if (!configService.isHallPassUsed() && (isWeekend || afterFiveOnFriday)) {
-            generate.setEnabled(true);
+            activate.setEnabled(true);
         } else {
-            generate.setEnabled(false);
+            activate.setEnabled(false);
         }
 
         Label statusLabel = new Label("Operation status will show here");
         statusLabel.getStyle().set("text-align", "right");
-        generate.addClickListener(buttonClickEvent -> {
+        activate.addClickListener(buttonClickEvent -> {
             int status = Utils.changePassword(ConfigService.STOCK_PASSWORD);
             if (status == 0) {
                 configService.getCredentials().stream()
@@ -273,45 +275,62 @@ public class CredentialsView extends Div implements AfterNavigationObserver {
                 statusLabel.setText("Check logs for error");
             }
         });
-        buttonLayout.add(generate);
+        buttonLayout.add(activate);
         buttonLayout.add(statusLabel);
         editorDiv.add(buttonLayout);
     }
 
     private void createRetryLayout(Div editorDiv) {
-        VerticalLayout buttonLayout = new VerticalLayout();
-        buttonLayout.setClassName("button-layout");
-        buttonLayout.setWidthFull();
-        buttonLayout.setSpacing(true);
-        buttonLayout.getStyle().set("padding-right", "0");
-        Button button = new Button("Retry failed jobs");
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        button.addClickListener(buttonClickEvent -> {
+        VerticalLayout cancelLayout = new VerticalLayout();
+        cancelLayout.setClassName("button-layout");
+        cancelLayout.setWidthFull();
+        cancelLayout.setSpacing(true);
+        cancelLayout.getStyle().set("padding-right", "0");
+        Button cancel = new Button("Cancel pending jobs");
+        cancel.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        cancel.setWidthFull();
+        cancel.addClickListener(buttonClickEvent -> {
+            jobRunner.cancelPendingJobs();
+        });
+        if (configService.getConfig().getPendingJobs().isEmpty()) {
+            cancel.setEnabled(false);
+        }
+        cancelLayout.add(cancel);
+        editorDiv.add(cancelLayout);
+
+        VerticalLayout retryLayout = new VerticalLayout();
+        retryLayout.setClassName("button-layout");
+        retryLayout.setWidthFull();
+        retryLayout.setSpacing(true);
+        retryLayout.getStyle().set("padding-right", "0");
+        Button retry = new Button("Retry failed jobs");
+        retry.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        retry.setWidthFull();
+        retry.addClickListener(buttonClickEvent -> {
             jobRunner.retryFailedJobs();
         });
         if (configService.getConfig().getRetryJobs().isEmpty()) {
-            button.setEnabled(false);
+            retry.setEnabled(false);
         }
-        buttonLayout.add(button);
-        editorDiv.add(buttonLayout);
-    }
+        retryLayout.add(retry);
+        editorDiv.add(retryLayout);
 
-    private void createDeleteLayout(Div editorDiv) {
-        VerticalLayout buttonLayout = new VerticalLayout();
-        buttonLayout.setClassName("button-layout");
-        buttonLayout.setWidthFull();
-        buttonLayout.setSpacing(true);
-        buttonLayout.getStyle().set("padding-right", "0");
-        Button button = new Button("Delete failed jobs");
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        button.addClickListener(buttonClickEvent -> {
+        VerticalLayout deleteLayout = new VerticalLayout();
+        deleteLayout.setClassName("button-layout");
+        deleteLayout.setWidthFull();
+        deleteLayout.setSpacing(true);
+        deleteLayout.getStyle().set("padding-right", "0");
+        Button delete = new Button("Delete failed jobs");
+        delete.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        delete.setWidthFull();
+        delete.addClickListener(buttonClickEvent -> {
             jobRunner.deleteFailedJobs();
         });
         if (configService.getConfig().getRetryJobs().isEmpty()) {
-            button.setEnabled(false);
+            delete.setEnabled(false);
         }
-        buttonLayout.add(button);
-        editorDiv.add(buttonLayout);
+        deleteLayout.add(delete);
+        editorDiv.add(deleteLayout);
     }
 
     private void createGridLayout(SplitLayout splitLayout) {
