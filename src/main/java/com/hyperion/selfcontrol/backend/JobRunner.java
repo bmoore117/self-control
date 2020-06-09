@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.backend;
 
+import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.backend.config.job.*;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBlockAddJob;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyCustomFiltersJob;
@@ -12,8 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -24,25 +24,26 @@ import java.util.stream.Collectors;
 public class JobRunner {
 
     private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
+    public static final String TOGGLE_INTERNET_OFF = "Toggle internet off";
     private final ConfigService configService;
-    private final BedtimeService bedtimeService;
 
     private static List<CustomTimerTask> tasks = new LinkedList<>();
 
     @Autowired
-    public JobRunner(ConfigService configService, BedtimeService bedtimeService) {
+    public JobRunner(ConfigService configService) {
         this.configService = configService;
-        this.bedtimeService = bedtimeService;
     }
 
     class CustomTimerTask extends TimerTask {
 
         private final LocalDateTime runAt;
         private final String jobDescription;
+        private final UUID jobId;
 
-        public CustomTimerTask(LocalDateTime runAt, String jobDescription) {
+        public CustomTimerTask(LocalDateTime runAt, String jobDescription, UUID jobId) {
             this.runAt = runAt;
             this.jobDescription = jobDescription;
+            this.jobId = jobId;
         }
 
         public LocalDateTime getRunAt() {
@@ -51,6 +52,10 @@ public class JobRunner {
 
         public String getJobDescription() {
             return jobDescription;
+        }
+
+        public UUID getJobId() {
+            return jobId;
         }
 
         @Override
@@ -70,7 +75,7 @@ public class JobRunner {
         for (CustomTimerTask task : tasks) {
             task.cancel(); // all existing timers are invalid, time has shifted under them by however much we slept for
             if (task.getRunAt().isAfter(LocalDateTime.now())) {
-                CustomTimerTask newTask = new CustomTimerTask(task.getRunAt(), task.getJobDescription());
+                CustomTimerTask newTask = new CustomTimerTask(task.getRunAt(), task.getJobDescription(), task.getJobId());
                 remainingTasks.add(newTask);
                 long epochMilli = task.getRunAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
                 long timerDuration = epochMilli - System.currentTimeMillis();
@@ -93,17 +98,22 @@ public class JobRunner {
         if (writeFile) {
             configService.writeFile();
         }
-        CustomTimerTask task = new CustomTimerTask(job.getJobLaunchTime(), job.getJobDescription());
+        CustomTimerTask task = new CustomTimerTask(job.getJobLaunchTime(), job.getJobDescription(), job.getId());
         Timer timer = new Timer(job.getJobDescription());
         long epochMilli = task.getRunAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long timerDuration = epochMilli - System.currentTimeMillis();
+        if (timerDuration < 0) {
+            timerDuration = 0;
+        }
         timer.schedule(task, timerDuration);
         tasks.add(task);
     }
 
     public void requeuePendingJobs() {
         for (Job job : configService.getConfig().getPendingJobs()) {
-            queueJobInternal(job, false);
+            if (LocalDateTime.now().isBefore(job.getJobLaunchTime())) {
+                queueJobInternal(job, false);
+            }
         }
         runReadyJobs();
     }
@@ -150,12 +160,31 @@ public class JobRunner {
 
     public void cancelPendingJobs() {
         Iterator<CustomTimerTask> it = tasks.iterator();
+        List<UUID> jobIds = new LinkedList<>();
         while (it.hasNext()) {
             CustomTimerTask task = it.next();
-            task.cancel();
-            it.remove();
+            if (!task.getJobDescription().equals(TOGGLE_INTERNET_OFF)) {
+                task.cancel();
+                jobIds.add(task.getJobId());
+                it.remove();
+            }
         }
-        configService.getConfig().getPendingJobs().clear();
+        jobIds.forEach(id -> configService.getConfig().getPendingJobs().removeIf(job -> !job.getId().equals(id)));
+        configService.writeFile();
+    }
+
+    private void cancelPendingToggleInternetJobs() {
+        Iterator<CustomTimerTask> it = tasks.iterator();
+        List<UUID> jobIds = new LinkedList<>();
+        while (it.hasNext()) {
+            CustomTimerTask task = it.next();
+            if (task.getJobDescription().equals(TOGGLE_INTERNET_OFF)) {
+                task.cancel();
+                jobIds.add(task.getJobId());
+                it.remove();
+            }
+        }
+        jobIds.forEach(id -> configService.getConfig().getPendingJobs().removeIf(job -> job.getId().equals(id)));
         configService.writeFile();
     }
 
@@ -246,12 +275,34 @@ public class JobRunner {
             if (job instanceof SetDelayJob) {
                 SetDelayJob delayJob = (SetDelayJob) job;
                 configService.setDelay(delayJob.getDelay());
-                log.info("Job {} completed successfully", job.getJobDescription());
-            } else {
-                UpdateBedtimesJob updateBedtimesJob = (UpdateBedtimesJob) job;
-                configService.getConfig().setBedtimes(updateBedtimesJob.getBedtimes());
                 configService.writeFile();
-                bedtimeService.scheduleToday(updateBedtimesJob.getBedtimes());
+                log.info("Job {} completed successfully", job.getJobDescription());
+            } else if (job instanceof SaveBedtimesJob) {
+                SaveBedtimesJob saveBedtimesJob = (SaveBedtimesJob) job;
+                Bedtimes bedtimes = saveBedtimesJob.getBedtimes();
+                configService.getConfig().setBedtimes(bedtimes);
+                configService.writeFile();
+
+                // if we have set today == null, and there were previous timers extant, cancel. If we're updating a
+                // timer, also cancel
+                cancelPendingToggleInternetJobs();
+
+                LocalTime today = bedtimes.today();
+                if (today != null) {
+                    LocalDate date = LocalDate.now();
+                    LocalDateTime launchTime = date.atTime(today);
+                    ToggleInternetJob toggleInternetJob = new ToggleInternetJob(launchTime, TOGGLE_INTERNET_OFF);
+                    queueJob(toggleInternetJob);
+                }
+            } else {
+                // job is an instance of ToggleInternetJob
+                LocalDate date = LocalDate.now();
+                DayOfWeek dow = date.getDayOfWeek();
+
+                // if we're still on the same day and haven't slept or been powered off thru til next day
+                if (dow.equals(job.getJobLaunchTime().getDayOfWeek())) {
+                    Utils.toggleInternet(false);
+                }
             }
             result = true;
         }

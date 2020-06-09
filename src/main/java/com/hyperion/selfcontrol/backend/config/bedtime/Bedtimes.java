@@ -1,5 +1,7 @@
 package com.hyperion.selfcontrol.backend.config.bedtime;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class Bedtimes {
@@ -66,5 +68,29 @@ public class Bedtimes {
 
     public void setSaturday(LocalTime saturday) {
         this.saturday = saturday;
+    }
+
+    public LocalTime today() {
+        LocalDate date = LocalDate.now();
+        DayOfWeek dow = date.getDayOfWeek();
+
+        LocalTime cutoffTime;
+        if ("sunday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getSunday();
+        } else if ("monday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getMonday();
+        } else if ("tuesday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getTuesday();
+        } else if ("wednesday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getWednesday();
+        } else if ("thursday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getThursday();
+        } else if ("friday".equalsIgnoreCase(dow.toString())) {
+            cutoffTime = getFriday();
+        } else {
+            cutoffTime = getSaturday();
+        }
+
+        return cutoffTime;
     }
 }

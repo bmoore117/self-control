@@ -4,13 +4,13 @@ import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 
 import java.time.LocalDateTime;
 
-public class UpdateBedtimesJob extends OfflineJob {
+public class SaveBedtimesJob extends OfflineJob {
 
     private static final String BEDTIMES = "bedtimes";
 
-    public UpdateBedtimesJob() {}
+    public SaveBedtimesJob() {}
 
-    public UpdateBedtimesJob(LocalDateTime jobLaunchTime, String description, Bedtimes bedtimes) {
+    public SaveBedtimesJob(LocalDateTime jobLaunchTime, String description, Bedtimes bedtimes) {
         super(jobLaunchTime, description);
         data.put(BEDTIMES, bedtimes);
     }

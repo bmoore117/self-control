@@ -71,7 +71,7 @@ public class TestJobRunner {
         Bedtimes bedtimes = new Bedtimes();
         bedtimes.setFriday(LocalTime.now());
         bedtimes.setSaturday(LocalTime.MIDNIGHT);
-        UpdateBedtimesJob job = new UpdateBedtimesJob(LocalDateTime.now(), "delete custom filter job", bedtimes);
+        SaveBedtimesJob job = new SaveBedtimesJob(LocalDateTime.now(), "delete custom filter job", bedtimes);
         testSerialization(job);
     }
 

@@ -1,0 +1,12 @@
+General Architecture:
+    2 job types, SaveBedtimesJob and ToggleInternetJob. From the UI, users can set a bedtime schedule, which propagates
+    to file on delay. On propagation, if there is a cutoff time for today, spawn a job based on it. Allow cancellation
+    of SaveBedtimesJobs on the normal system. ToggleInternetJobs however should not be cancellable, except through
+    setting a null cutoff time for the day and having that updated value propagate before the current ToggleInternetJob
+    runs, if extant.
+
+    ToggleInternetJob should store a LocalDateTime such that if the computer is slept or turned off until the next day,
+    the job will do nothing on run.
+
+    Internet will be enabled on startup and on ping, provided the current time is after 5 AM and before any cutoff time
+    for the day. If the cutoff time for the day is null, internet will be enabled after 5 AM.

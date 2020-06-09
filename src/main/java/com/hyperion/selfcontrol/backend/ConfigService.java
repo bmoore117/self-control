@@ -3,9 +3,9 @@ package com.hyperion.selfcontrol.backend;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hyperion.selfcontrol.backend.config.Config;
+import com.hyperion.selfcontrol.backend.config.job.ToggleInternetJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -17,7 +17,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.function.Function;
 
 @Service
 public class ConfigService {
@@ -77,8 +76,8 @@ public class ConfigService {
      * "0 0 0 25 12 ?" = every Christmas Day at midnight
      * second, minute, hour, day of month, month, day(s) of week
      */
-    @Scheduled(cron = "0 0 0 * * MON")
-    public void resetHallPassForTheWeek() {
+    // @Scheduled(cron = "0 0 0 * * MON")
+    public void resetHallPassForTheWeekIfEligible() {
         log.info("Entering resetHallPassForTheWeek");
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
@@ -87,13 +86,12 @@ public class ConfigService {
         LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
         boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
 
-        log.info("Hall pass used: {}", config.isHallPassUsed());
-        log.info("isWeekend: {}", isWeekend);
-        log.info("afterFiveOnFriday: {}", afterFiveOnFriday);
         if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
             log.info("Resetting hall pass & admin password for the week");
             config.setHallPassUsed(false);
-            Utils.changeLocalAdminPassword(Utils.generatePassword());
+            String password = Utils.generatePassword();
+            getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
+            Utils.changeLocalAdminPassword(password);
             writeFile();
         }
     }
@@ -159,35 +157,11 @@ public class ConfigService {
         }
     }
 
-    public <T, R> void runWithDelay(String name, Function<T, R> function, T input) {
-        long delay = config.getDelay();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                log.info("Running scheduled task: " + name);
-                function.apply(input);
-                writeFile();
-            }
-        };
-        Timer timer = new Timer(name);
-        log.info("Scheduling task: " + name);
-        timer.schedule(task, delay);
-    }
-
-    public void runWithDelay(String name, Runnable action) {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                log.info("Running scheduled task: " + name);
-                action.run();
-            }
-        };
-        Timer timer = new Timer(name);
-        log.info("Scheduling task: " + name);
-        timer.schedule(task, getDelayMillis());
-    }
-
     public Config getConfig() {
         return config;
+    }
+
+    public boolean hasCancellablePendingJobs() {
+        return config.getPendingJobs().stream().anyMatch(job -> job.getConcreteClass().equals(ToggleInternetJob.class));
     }
 }

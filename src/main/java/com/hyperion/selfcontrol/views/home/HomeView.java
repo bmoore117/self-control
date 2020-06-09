@@ -5,8 +5,8 @@ import com.hyperion.selfcontrol.backend.Credentials;
 import com.hyperion.selfcontrol.backend.JobRunner;
 import com.hyperion.selfcontrol.backend.Utils;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
+import com.hyperion.selfcontrol.backend.config.job.SaveBedtimesJob;
 import com.hyperion.selfcontrol.backend.config.job.SetDelayJob;
-import com.hyperion.selfcontrol.backend.config.job.UpdateBedtimesJob;
 import com.hyperion.selfcontrol.views.main.MainView;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
@@ -263,7 +263,7 @@ public class HomeView extends Div implements AfterNavigationObserver {
         activate.addClickListener(buttonClickEvent -> {
             int status = Utils.changeLocalAdminPassword(ConfigService.STOCK_PASSWORD);
             if (status == 0) {
-                configService.getCredentials().stream()
+                credentials.getDataProvider().fetch(new Query<>())
                         .filter(credentials -> credentials.getTag().contains("local"))
                         .findFirst()
                         .ifPresent(item -> {
@@ -293,7 +293,7 @@ public class HomeView extends Div implements AfterNavigationObserver {
         cancel.addClickListener(buttonClickEvent -> {
             jobRunner.cancelPendingJobs();
         });
-        if (configService.getConfig().getPendingJobs().isEmpty()) {
+        if (!configService.hasCancellablePendingJobs()) {
             cancel.setEnabled(false);
         }
         cancelLayout.add(cancel);
@@ -382,7 +382,7 @@ public class HomeView extends Div implements AfterNavigationObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> {
             Bedtimes bedtimes = bedtimesBinder.getBean();
-            UpdateBedtimesJob bedtimesJob = new UpdateBedtimesJob(getCurrentTimePlusDelay(configService), "Update bedtimes job", bedtimes);
+            SaveBedtimesJob bedtimesJob = new SaveBedtimesJob(getCurrentTimePlusDelay(configService), "Update bedtimes job", bedtimes);
             jobRunner.queueJob(bedtimesJob);
         });
         buttonLayout.add(saveButton);
