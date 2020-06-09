@@ -105,8 +105,8 @@ public class JobRunner {
         if (timerDuration < 0) {
             timerDuration = 0;
         }
-        timer.schedule(task, timerDuration);
         tasks.add(task);
+        timer.schedule(task, timerDuration);
     }
 
     public void requeuePendingJobs() {
