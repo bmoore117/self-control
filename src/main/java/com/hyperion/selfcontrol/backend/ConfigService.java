@@ -90,9 +90,10 @@ public class ConfigService {
             log.info("Resetting hall pass & admin password for the week");
             config.setHallPassUsed(false);
             String password = Utils.generatePassword();
-            getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
-            Utils.changeLocalAdminPassword(password);
-            writeFile();
+            if (Utils.changeLocalAdminPassword(password) == 0) {
+                getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
+                writeFile();
+            }
         }
     }
 
