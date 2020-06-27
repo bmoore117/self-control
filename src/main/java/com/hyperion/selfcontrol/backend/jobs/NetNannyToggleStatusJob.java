@@ -38,6 +38,6 @@ public class NetNannyToggleStatusJob {
 
     public static boolean toggleSafeSearch(WebDriver driver, ConfigService configService, boolean on) {
         return NetNannyBaseJob.navigateToProfile(driver, configService)
-                .map(profile -> profile.setForceSafeSearch(false, configService)).orElse(false);
+                .map(profile -> profile.setForceSafeSearch(on, configService)).orElse(false);
     }
 }
