@@ -1,4 +1,5 @@
-docker run -d --restart always -p 4444:4444 selenium/standalone-chrome
+docker run -d -p 4444:4444 --shm-size=2g --restart always selenium/standalone-chrome:latest
+it's fine to use shm-size, as ultimately this shm lives in the linux vm that containers run in. So it should work
 
 next copy winsw.exe and winsw.xml to the user folder you have created, preferably ben-local.
 
