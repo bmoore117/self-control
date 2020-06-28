@@ -13,10 +13,10 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ConfigService {
@@ -26,6 +26,13 @@ public class ConfigService {
     public static String FILE_LOCATION = "C:\\Users\\ben-local\\self-control";
     public static final String FILE_NAME = "config.json";
     public static final String STOCK_PASSWORD = "P@ssw0rd";
+
+    public static final long THIRTY_MINUTES = 1800000;
+    public static final long ONE_HOUR = 3600000;
+    public static final long TWO_HOURS = 7200000;
+    public static final long THREE_HOURS = 10800000;
+    public static final long FIVE_HOURS = 18000000;
+    public static final long TEN_HOURS = 36000000;
 
     private Config config;
     public static final ObjectMapper mapper;
@@ -77,25 +84,7 @@ public class ConfigService {
      * second, minute, hour, day of month, month, day(s) of week
      */
     // @Scheduled(cron = "0 0 0 * * MON")
-    public void resetHallPassForTheWeekIfEligible() {
-        log.info("Entering resetHallPassForTheWeek");
-        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-                .contains(now.getDayOfWeek());
 
-        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
-        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
-
-        if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
-            log.info("Resetting hall pass & admin password for the week");
-            config.setHallPassUsed(false);
-            String password = Utils.generatePassword();
-            if (Utils.changeLocalAdminPassword(password) == 0) {
-                getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
-                writeFile();
-            }
-        }
-    }
 
     public Optional<Credentials> getLocalAdmin() {
         return config.getCredentials().stream()

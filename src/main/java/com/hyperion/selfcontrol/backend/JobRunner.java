@@ -1,5 +1,6 @@
 package com.hyperion.selfcontrol.backend;
 
+import com.hyperion.selfcontrol.backend.config.Config;
 import com.hyperion.selfcontrol.backend.config.bedtime.Bedtimes;
 import com.hyperion.selfcontrol.backend.config.job.*;
 import com.hyperion.selfcontrol.backend.jobs.NetNannyBlockAddJob;
@@ -19,6 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CONTENT_FILTERS;
+import static com.hyperion.selfcontrol.backend.jobs.pages.NetNannyFiltersPage.CUSTOM_CONTENT_FILTERS;
 
 @Service
 public class JobRunner {
@@ -308,5 +312,46 @@ public class JobRunner {
         }
 
         return result;
+    }
+
+    public void resetHallPassForTheWeekIfEligible() {
+        log.info("Entering resetHallPassForTheWeek");
+        Config config = configService.getConfig();
+
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
+        boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+                .contains(now.getDayOfWeek());
+
+        LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
+        boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
+
+        if (!(isWeekend || afterFiveOnFriday)) {
+            if (config.isHallPassUsed()) {
+                log.info("Resetting hall pass & admin password for the week");
+                config.setHallPassUsed(false);
+                String password = Utils.generatePassword();
+                if (Utils.changeLocalAdminPassword(password) == 0) {
+                    configService.getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
+                    configService.writeFile();
+                }
+            }
+
+            // toggle normal filters
+            List<AbstractFilterCategory> filterCategories = config.getState().getContentFilters().stream().map(cf -> new FilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
+            ToggleFilterJob job = new ToggleFilterJob(LocalDateTime.now(), "Re-toggle content filters", CONTENT_FILTERS, filterCategories);
+            runJob(job);
+
+            // toggle custom filters
+            List<AbstractFilterCategory> customFilterCategories = config.getState().getCustomContentFilters().stream().map(cf -> new CustomFilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
+            ToggleFilterJob customJob = new ToggleFilterJob(LocalDateTime.now(), "Re-toggle custom content filters", CUSTOM_CONTENT_FILTERS, customFilterCategories);
+            runJob(customJob);
+
+            ToggleSafeSearchJob toggleSafeSearchJob = new ToggleSafeSearchJob(LocalDateTime.now(), "Re-toggle safe search", config.getState().isForceSafeSearch());
+            runJob(toggleSafeSearchJob);
+
+            if (configService.getDelayMillis() < ConfigService.TWO_HOURS) {
+                configService.setDelay(ConfigService.TWO_HOURS);
+            }
+        }
     }
 }

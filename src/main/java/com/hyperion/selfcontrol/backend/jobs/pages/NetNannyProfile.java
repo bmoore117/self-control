@@ -98,7 +98,7 @@ public class NetNannyProfile {
         }
     }
 
-    public boolean setForceSafeSearch(boolean enabled, ConfigService configService) {
+    public boolean setForceSafeSearch(boolean enable, ConfigService configService) {
         if (restrictions.isEmpty()) {
             log.error("Restrictions items not found");
             return false;
@@ -109,13 +109,13 @@ public class NetNannyProfile {
 
         if (safeSearch.isPresent()) {
             WebElement checkBox = safeSearch.get().findElement(By.cssSelector("input[type=checkbox]"));
-            if (!checkBox.isSelected() && enabled) {
+            if (!checkBox.isSelected() && enable) {
                 log.info("Clicking checkbox on");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
                 configService.getConfig().getState().setForceSafeSearch(true);
                 configService.writeFile();
                 return true;
-            } else if (checkBox.isSelected() && !enabled) {
+            } else if (checkBox.isSelected() && !enable) {
                 log.info("Clicking checkbox off");
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", checkBox);
                 configService.getConfig().getState().setForceSafeSearch(false);

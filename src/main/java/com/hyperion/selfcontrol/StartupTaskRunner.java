@@ -1,7 +1,6 @@
 package com.hyperion.selfcontrol;
 
 import com.hyperion.selfcontrol.backend.BedtimeService;
-import com.hyperion.selfcontrol.backend.ConfigService;
 import com.hyperion.selfcontrol.backend.JobRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +24,11 @@ public class StartupTaskRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StartupTaskRunner.class);
 
-    private final ConfigService configService;
     private final BedtimeService bedtimeService;
     private final JobRunner jobRunner;
 
     @Autowired
-    public StartupTaskRunner(ConfigService configService, BedtimeService bedtimeService, JobRunner jobRunner) {
-        this.configService = configService;
+    public StartupTaskRunner(BedtimeService bedtimeService, JobRunner jobRunner) {
         this.bedtimeService = bedtimeService;
         this.jobRunner = jobRunner;
     }
@@ -62,8 +59,7 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking ping from classpath", e);
         }
 
-        // todo should these be in jobrunner?
-        configService.resetHallPassForTheWeekIfEligible();
+        jobRunner.resetHallPassForTheWeekIfEligible();
         bedtimeService.reEnableInternetIfEligible();
         // todo is this needed if we have ping controller? It would seem safe enough to just wrap in a runAsync but is it really needed?
         CompletableFuture.runAsync(jobRunner::requeuePendingJobs);
