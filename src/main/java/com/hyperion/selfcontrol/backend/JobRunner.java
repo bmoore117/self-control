@@ -349,6 +349,9 @@ public class JobRunner {
             ToggleSafeSearchJob toggleSafeSearchJob = new ToggleSafeSearchJob(LocalDateTime.now(), "Re-toggle safe search", config.getState().isForceSafeSearch());
             runJob(toggleSafeSearchJob);
 
+            AddHostJob blockInstagram = new AddHostJob(LocalDateTime.now(), "Re-block instagram", "instagram.com", false);
+            runJob(blockInstagram);
+
             if (configService.getDelayMillis() < ConfigService.TWO_HOURS) {
                 configService.setDelay(ConfigService.TWO_HOURS);
             }

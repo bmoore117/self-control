@@ -39,6 +39,13 @@ public class NetNannyBlockAddPage {
                 .filter(element -> element.findElements(By.cssSelector("div.list-title." + postFix)).size() > 0)
                 .findFirst()
                 .map(urlList -> {
+                    boolean alreadyExists = urlList.findElements(By.cssSelector("div.website-list-item")).stream()
+                            .anyMatch(e -> e.getText().contains(website));
+                    if (alreadyExists) {
+                        log.info("Site {} already {}ed", website, postFix);
+                        return true;
+                    }
+
                     WebElement addButton = urlList.findElement(By.cssSelector("svg.btn-plus"));
                     if (!addButton.isDisplayed()) {
                         NetNannyBaseJob.scrollIntoView(addButton, webDriver);
