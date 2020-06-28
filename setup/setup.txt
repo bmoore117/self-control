@@ -1,6 +1,10 @@
 docker run -d -p 4444:4444 --shm-size=2g --restart always selenium/standalone-chrome:latest
 it's fine to use shm-size, as ultimately this shm lives in the linux vm that containers run in. So it should work
 
+non-admin users should not be in the docker-users group. To ensure docker startup, as ben-local > task scheduler >
+create task (not basic task) > run as ben local, do not store password, run whether logged in or not, run on startup,
+launch C:\Program Files\Docker\Docker\Docker Desktop.exe
+
 next copy winsw.exe and winsw.xml to the user folder you have created, preferably ben-local.
 
 .\winsw.exe install
