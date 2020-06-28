@@ -325,31 +325,31 @@ public class JobRunner {
         LocalDateTime fivePMOnFriday = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 17, 0);
         boolean afterFiveOnFriday = EnumSet.of(DayOfWeek.FRIDAY).contains(now.getDayOfWeek()) && now.isAfter(fivePMOnFriday);
 
-        if (!(isWeekend || afterFiveOnFriday)) {
-            if (config.isHallPassUsed()) {
-                log.info("Resetting hall pass & admin password for the week");
-                config.setHallPassUsed(false);
-                String password = Utils.generatePassword();
-                if (Utils.changeLocalAdminPassword(password) == 0) {
-                    configService.getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
-                    configService.writeFile();
-                }
+        if (config.isHallPassUsed() && !(isWeekend || afterFiveOnFriday)) {
+            log.info("Resetting hall pass & admin password for the week");
+            config.setHallPassUsed(false);
+            String password = Utils.generatePassword();
+            if (Utils.changeLocalAdminPassword(password) == 0) {
+                configService.getLocalAdmin().ifPresent(admin -> admin.setPassword(password));
+                configService.writeFile();
             }
+
+            LocalDateTime runTime = LocalDateTime.now().plusSeconds(ConfigService.FIVE_MINUTES_SECONDS);
 
             // toggle normal filters
             List<AbstractFilterCategory> filterCategories = config.getState().getContentFilters().stream().map(cf -> new FilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
-            ToggleFilterJob job = new ToggleFilterJob(LocalDateTime.now(), "Re-toggle content filters", CONTENT_FILTERS, filterCategories);
+            ToggleFilterJob job = new ToggleFilterJob(runTime, "Re-toggle content filters", CONTENT_FILTERS, filterCategories);
             runJob(job);
 
             // toggle custom filters
             List<AbstractFilterCategory> customFilterCategories = config.getState().getCustomContentFilters().stream().map(cf -> new CustomFilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
-            ToggleFilterJob customJob = new ToggleFilterJob(LocalDateTime.now(), "Re-toggle custom content filters", CUSTOM_CONTENT_FILTERS, customFilterCategories);
+            ToggleFilterJob customJob = new ToggleFilterJob(runTime, "Re-toggle custom content filters", CUSTOM_CONTENT_FILTERS, customFilterCategories);
             runJob(customJob);
 
-            ToggleSafeSearchJob toggleSafeSearchJob = new ToggleSafeSearchJob(LocalDateTime.now(), "Re-toggle safe search", config.getState().isForceSafeSearch());
+            ToggleSafeSearchJob toggleSafeSearchJob = new ToggleSafeSearchJob(runTime, "Re-toggle safe search", config.getState().isForceSafeSearch());
             runJob(toggleSafeSearchJob);
 
-            AddHostJob blockInstagram = new AddHostJob(LocalDateTime.now(), "Re-block instagram", "instagram.com", false);
+            AddHostJob blockInstagram = new AddHostJob(runTime, "Re-block instagram", "instagram.com", false);
             runJob(blockInstagram);
 
             if (configService.getDelayMillis() < ConfigService.TWO_HOURS) {

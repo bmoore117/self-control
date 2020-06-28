@@ -59,7 +59,6 @@ public class StartupTaskRunner implements ApplicationRunner {
             log.error("Error unpacking ping from classpath", e);
         }
 
-        jobRunner.resetHallPassForTheWeekIfEligible();
         bedtimeService.reEnableInternetIfEligible();
         // todo is this needed if we have ping controller? It would seem safe enough to just wrap in a runAsync but is it really needed?
         CompletableFuture.runAsync(jobRunner::requeuePendingJobs);

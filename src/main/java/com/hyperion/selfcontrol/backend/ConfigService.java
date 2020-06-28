@@ -27,6 +27,8 @@ public class ConfigService {
     public static final String FILE_NAME = "config.json";
     public static final String STOCK_PASSWORD = "P@ssw0rd";
 
+    public static final long FIVE_MINUTES_SECONDS = 300;
+
     public static final long THIRTY_MINUTES = 1800000;
     public static final long ONE_HOUR = 3600000;
     public static final long TWO_HOURS = 7200000;
