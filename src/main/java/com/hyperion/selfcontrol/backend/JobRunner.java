@@ -339,18 +339,18 @@ public class JobRunner {
             // toggle normal filters
             List<AbstractFilterCategory> filterCategories = config.getState().getContentFilters().stream().map(cf -> new FilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
             ToggleFilterJob job = new ToggleFilterJob(runTime, "Re-toggle content filters", CONTENT_FILTERS, filterCategories);
-            runJob(job);
+            queueJob(job);
 
             // toggle custom filters
             List<AbstractFilterCategory> customFilterCategories = config.getState().getCustomContentFilters().stream().map(cf -> new CustomFilterCategory(cf.getName(), cf.getStatus())).collect(Collectors.toList());
             ToggleFilterJob customJob = new ToggleFilterJob(runTime, "Re-toggle custom content filters", CUSTOM_CONTENT_FILTERS, customFilterCategories);
-            runJob(customJob);
+            queueJob(customJob);
 
             ToggleSafeSearchJob toggleSafeSearchJob = new ToggleSafeSearchJob(runTime, "Re-toggle safe search", config.getState().isForceSafeSearch());
-            runJob(toggleSafeSearchJob);
+            queueJob(toggleSafeSearchJob);
 
             AddHostJob blockInstagram = new AddHostJob(runTime, "Re-block instagram", "instagram.com", false);
-            runJob(blockInstagram);
+            queueJob(blockInstagram);
 
             if (configService.getDelayMillis() < ConfigService.TWO_HOURS) {
                 configService.setDelay(ConfigService.TWO_HOURS);
