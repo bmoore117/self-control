@@ -52,10 +52,7 @@ public class MainView extends AppLayout {
 
     private static Tab[] getAvailableTabs() {
         final List<Tab> tabs = new ArrayList<>();
-        tabs.add(createTab("Filters", FiltersView.class));
-        tabs.add(createTab("Custom Filters", CustomFiltersView.class));
         tabs.add(createTab("Home", HomeView.class));
-        tabs.add(createTab("Block/Add", BlockAddView.class));
         return tabs.toArray(new Tab[tabs.size()]);
     }
 
